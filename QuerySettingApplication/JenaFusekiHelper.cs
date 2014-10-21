@@ -11,7 +11,7 @@ namespace QuerySettingApplication
 
         public void StartServer()
         {
-            if (!Directory.Exists(_fusekiFolder))
+            /*if (!Directory.Exists(_fusekiFolder))
             {
                 var dlg = new CommonOpenFileDialog();
                 dlg.Title = "Choose fuseki folder";
@@ -30,7 +30,7 @@ namespace QuerySettingApplication
                 if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
                     if (dlg.FileName != null)
                         _fusekiFolder = dlg.FileName;
-            }
+            }*/
 
             if (!Directory.Exists(_fusekiFolder))
                 return;

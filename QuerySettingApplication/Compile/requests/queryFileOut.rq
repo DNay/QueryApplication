@@ -1,0 +1,9 @@
+PREFIX akt:  <http://www.aktors.org/ontology/portal#>
+
+SELECT DISTINCT ?entity
+FROM <http://dig.csail.mit.edu/2008/webdav/timbl/foaf.rdf>
+WHERE { 
+  SERVICE <http://acm.rkbexplorer.com/sparql> { 
+  <http://acm.rkbexplorer.com/id/989557> akt:cites-publication-reference ?entity.
+  }
+}

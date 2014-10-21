@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace QuerySettingApplication
 {
+    [JsonObject]
     [Serializable]
     public class Vertex
     {
@@ -15,10 +17,15 @@ namespace QuerySettingApplication
             Texts = new List<string> {text};
         }
 
+        [JsonProperty]
         [XmlElement("Id")] 
         public int Id{ get; set; }
+
+        [JsonProperty]
         [XmlElement("Cluster")] 
         public int Cluster { get; set; }
+
+        [JsonProperty]
         [XmlElement("Texts")] 
         public List<string> Texts { get; set; }
 
@@ -29,6 +36,7 @@ namespace QuerySettingApplication
         }
     }
 
+    [JsonObject]
     [Serializable]
     public class Edge
     {
@@ -36,21 +44,25 @@ namespace QuerySettingApplication
 
         public Edge(int outV, int inV)
         {
-            InId = inV;
-            OutId = outV;
+            target = inV;
+            source = outV;
         }
 
-        [XmlElement("InId")] 
-        public int InId { get; set; }
-        [XmlElement("OutId")] 
-        public int OutId { get; set; }
+        [JsonProperty]
+        [XmlElement("target")] 
+        public int target { get; set; }
+
+        [JsonProperty]
+        [XmlElement("source")] 
+        public int source { get; set; }
         public override bool Equals(object obj)
         {
             var otherEdge = obj as Edge;
-            return otherEdge != null && (otherEdge.InId == InId && otherEdge.OutId == OutId);
+            return otherEdge != null && (otherEdge.target == target && otherEdge.source == source);
         }
     }
 
+    [JsonObject]
     [Serializable]
     public class Graph
     {
@@ -85,10 +97,15 @@ namespace QuerySettingApplication
             return firstOrDefault != null ? firstOrDefault.Id : -1;
         }
 
+        [JsonProperty]
         [XmlElement("NumVertexes")]
         public int NumVertexes { get; set; }
+
+        [JsonProperty]
         [XmlElement("Vertexes")]
         public List<Vertex> Vertexes { get; set; }
+
+        [JsonProperty]
         [XmlElement("Edges")]
         public List<Edge> Edges { get; set; }
     }

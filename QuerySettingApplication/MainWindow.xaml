@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Query setting window" Height="201" Width="525" ResizeMode="CanMinimize">
     <Grid>
-        <TextBox Name="ServiceTextBox" HorizontalAlignment="Left" Height="25" Margin="80,10,0,0" TextWrapping="Wrap" Text="http://acm.rkbexplorer.com/sparql" VerticalAlignment="Top" Width="424" RenderTransformOrigin="6.087,0.447" Grid.ColumnSpan="2"/>
-        <Label Content="Service" HorizontalAlignment="Left" Height="25" Margin="10,10,0,0" VerticalAlignment="Top" Width="65"/>
+        <TextBox Name="PredicateTextBox" HorizontalAlignment="Left" Height="25" Margin="80,10,0,0" TextWrapping="Wrap" Text="akt:cites-publication-reference" VerticalAlignment="Top" Width="424" RenderTransformOrigin="6.087,0.447" Grid.ColumnSpan="2"/>
+        <Label Content="Predicate" HorizontalAlignment="Left" Height="25" Margin="10,10,0,0" VerticalAlignment="Top" Width="65"/>
         <TextBox Name="EntityTextBox" HorizontalAlignment="Left" Height="25" Margin="80,40,0,0" TextWrapping="Wrap" Text="http://acm.rkbexplorer.com/id/1008169" VerticalAlignment="Top" Width="424" RenderTransformOrigin="6.087,0.447" Grid.ColumnSpan="2"/>
         <Label Content="Start item" HorizontalAlignment="Left" Height="25" Margin="10,40,0,0" VerticalAlignment="Top" Width="65"/>
         <Button Content="Start process" HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" Width="86" Click="Start_Button_Click"/>

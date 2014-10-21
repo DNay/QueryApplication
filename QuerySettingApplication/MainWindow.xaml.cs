@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace QuerySettingApplication
 {
@@ -18,7 +19,7 @@ namespace QuerySettingApplication
 
         private void Start_Button_Click(object sender, RoutedEventArgs e)
         {
-            ServiceSingletons.QueryProcessor.StartProcess(ServiceTextBox.Text, EntityTextBox.Text);
+            ServiceSingletons.QueryProcessor.StartProcess(PredicateTextBox.Text, EntityTextBox.Text);
             UpdateFields();
         }
 
@@ -34,9 +35,14 @@ namespace QuerySettingApplication
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             XmlSerializer serializer = new XmlSerializer(typeof(Graph));
-            FileStream fileStream = File.Create("Graph.xml");
+            var fileStream = File.Create("Graph.xml");
             serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.Graph);
             fileStream.Close();
+
+            var strJ = JsonConvert.SerializeObject(ServiceSingletons.QueryProcessor.Graph);
+            var fileStreamJ = File.CreateText("Graph.json");
+            fileStreamJ.Write(strJ);
+            fileStreamJ.Close();
         }
 
         private void Load_Click(object sender, RoutedEventArgs e)
