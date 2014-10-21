@@ -1,0 +1,20 @@
+﻿<Window x:Class="QuerySettingApplication.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Query setting window" Height="201" Width="525" ResizeMode="CanMinimize">
+    <Grid>
+        <TextBox Name="ServiceTextBox" HorizontalAlignment="Left" Height="25" Margin="80,10,0,0" TextWrapping="Wrap" Text="http://acm.rkbexplorer.com/sparql" VerticalAlignment="Top" Width="424" RenderTransformOrigin="6.087,0.447" Grid.ColumnSpan="2"/>
+        <Label Content="Service" HorizontalAlignment="Left" Height="25" Margin="10,10,0,0" VerticalAlignment="Top" Width="65"/>
+        <TextBox Name="EntityTextBox" HorizontalAlignment="Left" Height="25" Margin="80,40,0,0" TextWrapping="Wrap" Text="http://acm.rkbexplorer.com/id/1008169" VerticalAlignment="Top" Width="424" RenderTransformOrigin="6.087,0.447" Grid.ColumnSpan="2"/>
+        <Label Content="Start item" HorizontalAlignment="Left" Height="25" Margin="10,40,0,0" VerticalAlignment="Top" Width="65"/>
+        <Button Content="Start process" HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" Width="86" Click="Start_Button_Click"/>
+        <Button Content="Start fuseki server" HorizontalAlignment="Left" Margin="394,130,0,0" VerticalAlignment="Top" Width="110" Click="Fuseki_Button_Click"/>
+        <ProgressBar Name="Bar" HorizontalAlignment="Left" Height="22" Margin="101,70,0,0" VerticalAlignment="Top" Width="288" Visibility="Hidden" />
+        <Label Content="Vertexes: " HorizontalAlignment="Left" Height="25" Margin="101,70,0,0" VerticalAlignment="Top" Width="65"/>
+        <Label Name="NumVertexes" Content="" HorizontalAlignment="Left" Height="25" Margin="166,70,0,0" VerticalAlignment="Top" Width="46"/>
+        <Button Content="Serilize" HorizontalAlignment="Left" Height="25" Margin="10,100,0,0" VerticalAlignment="Top" Width="112" Click="Save_Click"/>
+        <Button Content="Deserilize" HorizontalAlignment="Left" Height="25" Margin="10,130,0,0" VerticalAlignment="Top" Width="112" Click="Load_Click"/>
+        <Label Content="Edges: " HorizontalAlignment="Left" Height="25" Margin="238,70,0,0" VerticalAlignment="Top" Width="48"/>
+        <Label x:Name="NumEdges" Content="" HorizontalAlignment="Left" Height="25" Margin="286,70,0,0" VerticalAlignment="Top" Width="46"/>
+    </Grid>
+</Window>
