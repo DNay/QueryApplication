@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace QuerySettingApplication
@@ -33,7 +34,10 @@ namespace QuerySettingApplication
             }*/
 
             if (!Directory.Exists(_fusekiFolder))
+            {
+                MessageBox.Show("Folder");
                 return;
+            }
 
             var pRun = new Process();
             pRun.EnableRaisingEvents = true;

@@ -17,5 +17,14 @@
         }
 
         public static MainWindow MainWindow { get; set; }
+
+        private static IClusterService _clusterService = new DirectedClusterService();//ClusterService();
+
+        public static IClusterService ClusterService
+        {
+            get { return _clusterService; }
+        }
+
+        public static ClusteringWindow ClusterWindow { get; set; }
     }
 }

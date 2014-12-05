@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -13,7 +14,8 @@ namespace QuerySettingApplication
         private Graph _graph = new Graph();
         private List<string> processedVertexes = new List<string>();
         private List<string> preparedVertexes = new List<string>();
-        private Dictionary<string, string> _services = new  Dictionary<string, string>();
+        private Dictionary<string, string> _services = new Dictionary<string, string>();
+        private int _maxVertexes = 600;
 
         public QueryProcessor()
         {
@@ -31,13 +33,13 @@ namespace QuerySettingApplication
             return _graph.NumVertexes;
         }
 
-        public bool IsAddNewVertexes { get { return GetVertexesCount() < 100; } }
+        public bool IsAddNewVertexes { get { return GetVertexesCount() < _maxVertexes; } }
 
-        public void StartProcess(string predicate, string initEntity)
+        public void StartProcess(string predicate, string initEntity, int maxVertCount)
         {
             preparedVertexes.Add(initEntity);
             _graph.AddVertex(initEntity);
-
+            _maxVertexes = maxVertCount;
             do
             {
                 var currentEntity = preparedVertexes.FirstOrDefault();
@@ -54,9 +56,15 @@ namespace QuerySettingApplication
         {
             processedVertexes.Add(currentEntity);
             preparedVertexes.Remove(currentEntity);
+            try
+            {
+                ProcessInQuery(predicate, currentEntity);
+                ProcessOutQuery(predicate, currentEntity);
+            }
+            catch (Exception)
+            {
 
-            ProcessInQuery(predicate, currentEntity);
-            ProcessOutQuery(predicate, currentEntity);
+            } 
         }
 
         private void ProcessInQuery(string predicate, string currentEntity)
@@ -65,8 +73,10 @@ namespace QuerySettingApplication
 
             var jsonResult = ProcessAnyQuery(reqFile);
 
-            if (jsonResult != null)
-                _graph.Edges.AddRange(jsonResult.Value.Results.Bindings.Select(t => new Edge(_graph.GetVertexId(t.Entity.Value), _graph.GetVertexId(currentEntity))).Where(s => !_graph.Edges.Contains(s)));
+            _graph.Edges.AddRange(jsonResult.Results.Bindings
+                                                    .Where(t => _graph.GetVertex(t.Entity.Value) != null)
+                                                    .Select(t => new Edge(_graph.GetVertexId(t.Entity.Value), _graph.GetVertexId(currentEntity)))
+                                                    .Where(s => !_graph.Edges.Contains(s)));
         }
 
         private void ProcessOutQuery(string predicate, string currentEntity)
@@ -75,11 +85,13 @@ namespace QuerySettingApplication
 
             var jsonResult = ProcessAnyQuery(reqFile);
 
-            if (jsonResult != null)
-                _graph.Edges.AddRange(jsonResult.Value.Results.Bindings.Select(t => new Edge(_graph.GetVertexId(currentEntity), _graph.GetVertexId(t.Entity.Value))).Where(s => !_graph.Edges.Contains(s)));
+            _graph.Edges.AddRange(jsonResult.Results.Bindings
+                                                    .Where(t => _graph.GetVertex(t.Entity.Value) != null)
+                                                    .Select(t => new Edge(_graph.GetVertexId(currentEntity), _graph.GetVertexId(t.Entity.Value)))
+                                                    .Where(s => !_graph.Edges.Contains(s)));
         }
 
-        private JSONResult? ProcessAnyQuery(string reqFile)
+        private JSONResult ProcessAnyQuery(string reqFile)
         {
             var command = "jruby s-query --service=http://localhost:3030/sparql --query=\"..\\" + reqFile + "\" > \"..\\" +
                           _outFile + "\"";
@@ -88,15 +100,19 @@ namespace QuerySettingApplication
             var file = File.ReadAllText(_outFile);
             var jsonResult = JsonConvert.DeserializeObject<JSONResult>(file);
 
-            if (jsonResult.Results.Bindings.Length > 50)
-                return null;
+            if (jsonResult.Results.Bindings.Length >= 50)
+                return jsonResult;
 
-            foreach (var v in jsonResult.Results.Bindings.Select(t => t.Entity.Value).Where(s => _graph.GetVertex(s) == null))
+            foreach (var v in jsonResult.Results.Bindings
+                                                .Select(t => t.Entity.Value)
+                                                .Where(s => _graph.GetVertex(s) == null && IsAddNewVertexes))
             {
                 _graph.AddVertex(v);
             }
+            preparedVertexes.InsertRange(0, jsonResult.Results.Bindings
+                                                        .Select(t => t.Entity.Value)
+                                                        .Where(s => !preparedVertexes.Contains(s) && !processedVertexes.Contains(s) && IsAddNewVertexes));
 
-            preparedVertexes.AddRange(jsonResult.Results.Bindings.Select(t => t.Entity.Value).Where(s => !preparedVertexes.Contains(s) && !processedVertexes.Contains(s) && IsAddNewVertexes));
             return jsonResult;
         }
 
