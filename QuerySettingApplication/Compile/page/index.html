@@ -107,9 +107,9 @@
 
             link.attr("d", function (d) {
                 return "M"+(d.source.X + w / 2)+","
-                          +(d.source.Y + h / 2)+" "+
-                       "Q"+(d.fictX + w / 2 + 100)+","
-                          +(d.fictY + h / 2 + 100)+" "
+                          +(d.source.Y + h / 2)+" "//+
+                       //"Q"+(d.fictX + w / 2 + 100)+","
+                       //   +(d.fictY + h / 2 + 100)+" "
                           +(d.target.X + w / 2)+","
                           +(d.target.Y + h / 2); } )
         }

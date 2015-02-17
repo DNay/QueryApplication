@@ -139,7 +139,7 @@ namespace QuerySettingApplication
 
         private void PrepareJsonData()
         {
-            PositingPoints(_graph, UseSpiral.IsChecked);
+            PositingPointsComponent(_graph);
             CalculateDegree(_graph);
             var strJ = JsonConvert.SerializeObject(_graph);
             var fileStreamJ = File.CreateText("page//graph2.json");
@@ -183,7 +183,7 @@ namespace QuerySettingApplication
             
         }
 
-        private static void PositingPoints(Graph graph, bool? isSpiral)
+        private static void PositingPointsCircle(Graph graph)
         {
             var clusters = new Dictionary<int, int>();
             var clustersAdded = new Dictionary<int, int>();
@@ -211,12 +211,6 @@ namespace QuerySettingApplication
                 var vertexAngle = 2 * Math.PI / clusters[vertex.Cluster] * clustersAdded[vertex.Cluster];
                 var vertexRadius = 40 * Math.Log(clusters[vertex.Cluster], 2);
 
-                if (isSpiral.HasValue && isSpiral.Value)
-                {
-                    vertexAngle *= 2;
-                    vertexRadius *= (double)clustersAdded[vertex.Cluster] / clusters[vertex.Cluster];
-                }
-
                 vertex.X = centerGroupX + vertexRadius * Math.Cos(vertexAngle);
                 vertex.Y = centerGroupY + vertexRadius * Math.Sin(vertexAngle);
                 clustersAdded[vertex.Cluster]++;
@@ -234,6 +228,61 @@ namespace QuerySettingApplication
                 {
                     edge.fictX = 0;
                     edge.fictY = 0;                
+                }
+            }
+        }
+
+        private static void PositingPointsComponent(Graph graph)
+        {
+            var clusters = new Dictionary<int, int>();
+            var clustersAdded = new Dictionary<int, int>();
+            var clustersHeight = new Dictionary<int, double>();
+            var clustersWidth = new Dictionary<int, double>();
+            var clustersX = new Dictionary<int, double>();
+            var clustersY = new Dictionary<int, double>();
+
+            foreach (var vertex in graph.Vertexes)
+            {
+                if (!clusters.ContainsKey(vertex.Cluster))
+                {
+                    clusters.Add(vertex.Cluster, 1);
+                    clustersAdded.Add(vertex.Cluster, 0);
+                }
+                else
+                    clusters[vertex.Cluster]++;
+            }
+
+            double h = 0;
+            var ran = new Random(DateTime.Now.Millisecond);
+
+            foreach (var cluster in clusters)
+            {
+                clustersWidth[cluster.Key] = Math.Log(cluster.Value) * 100;
+                clustersHeight[cluster.Key] = Math.Log(cluster.Value) * 40;
+
+                clustersY[cluster.Key] = h;
+                h += clustersHeight[cluster.Key];
+                clustersX[cluster.Key] = ran.NextDouble() * 4000;
+            }
+            
+            foreach (var vertex in graph.Vertexes)
+            {
+                vertex.X = clustersX[vertex.Cluster] + ran.NextDouble() * clustersWidth[vertex.Cluster];
+                vertex.Y = clustersY[vertex.Cluster] + ran.NextDouble() * clustersHeight[vertex.Cluster];
+                clustersAdded[vertex.Cluster]++;
+            }
+
+            foreach (var edge in graph.Edges)
+            {
+                if (graph.Vertexes[edge.source].Cluster == graph.Vertexes[edge.target].Cluster)
+                {
+                    edge.fictX = clustersX[graph.Vertexes[edge.source].Cluster] + clustersWidth[graph.Vertexes[edge.source].Cluster] * 0.5;
+                    edge.fictY = clustersY[graph.Vertexes[edge.source].Cluster] + clustersHeight[graph.Vertexes[edge.source].Cluster] * 0.5;
+                }
+                else
+                {
+                    edge.fictX = (clustersX[graph.Vertexes[edge.source].Cluster] + clustersX[graph.Vertexes[edge.target].Cluster]) / 2;
+                    edge.fictY = (clustersY[graph.Vertexes[edge.source].Cluster] + clustersY[graph.Vertexes[edge.target].Cluster]) / 2;
                 }
             }
         }

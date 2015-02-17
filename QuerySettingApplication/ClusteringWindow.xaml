@@ -32,7 +32,6 @@
                    Text="{Binding Path=ModularityText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <TreeView Name="ClusterTree" HorizontalAlignment="Left" Height="403" Margin="214,35,0,0" VerticalAlignment="Top" Width="463" 
                   ItemsSource="{Binding Path=TreeItems,  UpdateSourceTrigger=PropertyChanged}"  MouseDoubleClick="ClusterTree_OnMouseDoubleClick"/>
-        <CheckBox Content="Использовать спирали" HorizontalAlignment="Left" Margin="10,254,0,0" VerticalAlignment="Top" Name="UseSpiral"/>
         <Button Content="Нарисовать в браузере" HorizontalAlignment="Left" Height="25" Margin="10,275,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowser_OnClick"/>
     </Grid>
 </Window>
