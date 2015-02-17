@@ -102,7 +102,7 @@
     <Compile Include="DirectedClusterService.cs" />
     <None Include="ClusterService.cs" />
     <Compile Include="Properties\Annotations.cs" />
-    <None Include="VertexMovePriotizer.cs" />
+    <Compile Include="VertexMovePriotizer.cs" />
     <Compile Include="MergePriotizer.cs" />
     <Compile Include="QueryProcessor.cs" />
     <Compile Include="ServiceSingletons.cs" />

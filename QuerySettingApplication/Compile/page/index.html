@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Force-Directed Layout</title>
+    <title>Clusters in round Layout</title>
     <script type="text/javascript" src="d3.js"></script>
     <script type="text/javascript" src="d3.min.js"></script>
     <!--<script type="text/javascript" src="http://mbostock.github.com/d3/d3.js?1.29.1"></script>-->
@@ -22,9 +22,9 @@
 <body>
 <script type="text/javascript">
 
-    var w = 2000,
-            h = 2000,
-            r = 6,
+    var w = 15000,
+            h = 15000,
+            r = 5,
             fill = d3.scale.category20();
 
     var force = d3.layout.force()
@@ -34,50 +34,93 @@
             .attr("width", w)
             .attr("height", h);
 
-    d3.json("Graph2.json", function(json) {
+    d3.json("Graph2.json", function (json) {
+        var defs = svg.append("defs");
+        defs.append("marker")
+                .attr("id", "myMarker")
+                .attr("viewBox", "-10 0 10 10")
+                .attr("refX", "1")
+                .attr("refY", "5")
+                .attr("markerUnits", "strokeWidth")
+                .attr("orient", "auto")
+                .attr("markerWidth", "40")
+                .attr("markerHeight", "30")
+                .append("polyline")
+                .attr("points", "-10,3 0,5 -10,7 -9,5")
+                .attr("fill", "darkblue");
+
+        var citeGrad = defs.append("linearGradient").attr("id", "citeGrad");
+        citeGrad.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "blue");
+        citeGrad.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "red");
+
         var link = svg.selectAll("line")
                 .data(json.Edges)
-                .enter().append("svg:line");
-//http://apike.ca/prog_svg_markers.html
+                .enter()
+                .append("svg:path")
+                .attr("marker-end", "url(#myMarker)")
+                .style("stroke", "url(#citeGrad)")
+                .style("stroke-width", "0.5")
+                .style("stroke-opacity", "0.5")
+                .style("fill", "none");//stroke="blue" stroke-width="20"
+
         var node = svg.selectAll("circle")
                 .data(json.Vertexes)
                 .enter().append("svg:circle")
-                .attr("r", r - .75)
-                .style("fill", function(d) { return fill(d.Cluster); })
-                .style("stroke", function(d) { return d3.rgb(fill(d.Cluster)).darker(); })
+                .attr("r", function (d) {
+                    return (r - 1 + Math.log(2 * d.degreeIn + 1));
+                })
+                .attr("title", function (d) {
+                    return d.Texts;
+                })
+                .style("fill", function (d) {
+                    return fill(d.Cluster);
+                })
+                .style("stroke", function (d) {
+                    return d3.rgb(fill(d.Cluster)).darker();
+                })
+                .on("click", function (d) {
+                    node.style("fill", function (p) {
+                        if (p.Id != d.Id)
+                            return fill(p.Cluster);
+                        else
+                            return "#ffffff";
+                    });
+                    open(d.Texts);
+                })
+                .on("mouseover", mouseover)
                 .call(force.drag);
 
         force
                 .nodes(json.Vertexes)
                 .links(json.Edges)
-                .on("start", locate)
+                .on("start", locate)//.on("tick", locate)
                 .start();
 
         function locate(e) {
 
-            node.attr("cx", function(d)
-            {
-                if (d.x < 0)
-                    return 0;
-                if (d.x > w)
-                    return w;
-                return d.x;
-            })
-                    .attr("cy", function(d)
-                    {
-                        if (d.y < 0)
-                            return 0;
-                        if (d.y > h)
-                            return h;
-                        return d.y;
-                    });
+            node.attr("cx", function (d) { return d.X + w / 2; })
+                .attr("cy", function (d) { return d.Y + h / 2; });
 
-            link.attr("x1", function(d) {
-                return d.source.x;
-            })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
+            link.attr("d", function (d) {
+                return "M"+(d.source.X + w / 2)+","
+                          +(d.source.Y + h / 2)+" "+
+                       "Q"+(d.fictX + w / 2 + 100)+","
+                          +(d.fictY + h / 2 + 100)+" "
+                          +(d.target.X + w / 2)+","
+                          +(d.target.Y + h / 2); } )
+        }
+
+        function mouseover(d, i) {
+            link.style("stroke-width", function (p) {
+                                                    if (p.source.index != i)
+                                                        return "0.5";
+                                                    else
+                                                        return "1";
+                                                    })
         }
     });
 

@@ -29,6 +29,15 @@ namespace QuerySettingApplication
         [XmlElement("Texts")] 
         public List<string> Texts { get; set; }
 
+        [JsonProperty]
+        public double X { get; set; }
+
+        [JsonProperty]
+        public double Y { get; set; }
+
+        [JsonProperty]
+        public int degreeIn { get; set; }
+
         public override bool Equals(object obj)
         {
             var otherVertex = obj as Vertex;
@@ -55,6 +64,11 @@ namespace QuerySettingApplication
         [JsonProperty]
         [XmlElement("source")] 
         public int source { get; set; }
+
+        [JsonProperty]
+        public double fictX { get; set; }
+        [JsonProperty]
+        public double fictY { get; set; }
         public override bool Equals(object obj)
         {
             var otherEdge = obj as Edge;
@@ -86,9 +100,25 @@ namespace QuerySettingApplication
             return newVer;
         }
 
+        public Edge AddEdge(Edge edge)
+        {
+            var cur = GetEdge(edge);
+            if (cur != null)
+            {
+                return cur;
+            }
+
+            Edges.Add(edge);
+            return edge;
+        }
+
         public Vertex GetVertex(string name)
         {
             return Vertexes.FirstOrDefault(t => t.Texts.Contains(name));
+        }
+        public Edge GetEdge(Edge edge)
+        {
+            return Edges.FirstOrDefault(t => t.source == edge.source && t.target == edge.target);
         }
 
         public int GetVertexId(string name)

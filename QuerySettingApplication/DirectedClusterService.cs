@@ -12,7 +12,7 @@ namespace QuerySettingApplication
         //private List<EdgeWrapper> Edges = new List<EdgeWrapper>();
 
         private MergePriotizer _mergePriotizer = new MergePriotizer();
-        //private VertexMovePriotizer _vertexMovePriotizer = new VertexMovePriotizer();
+        private VertexMovePriotizer _vertexMovePriotizer = new VertexMovePriotizer();
         private bool IsAccurate = false;
 
         private int _numV;
@@ -36,7 +36,7 @@ namespace QuerySettingApplication
             _matr = new int[_numV, _numV];
 
             int curCl = 0;
-            for (var i = 0; i < graph.NumVertexes;)
+            for (var i = 0; i < graph.NumVertexes; )
             {
                 for (int j = 0; j < num && i < graph.NumVertexes; j++)
                 {
@@ -56,6 +56,7 @@ namespace QuerySettingApplication
             RecalcWeightOfClustering();
             ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
         }
+
         private void Renumber()
         {
             var cluster = new int[_numV];
@@ -102,12 +103,8 @@ namespace QuerySettingApplication
                 deltaMax = _mergePriotizer.GetPrioritizedPair(out C, out D);
                 if (deltaMax < 0)
                     break;
-                
-                //var oldMod = _modilarity;
-                //deltaMax = DeltaWeightOfMerge(C, D);
+
                 Merge(C, D);
-                //var newMod = _modilarity;
-                //var actDelta = newMod - oldMod;
 
                 ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
 
@@ -116,42 +113,75 @@ namespace QuerySettingApplication
             Renumber();
         }
 
-        /*public void SSG()
+        public void CG()
         {
-            _mergePriotizer.Initialize(this);
-            double lastMod = WeightOfClustering();
+            _vertexMovePriotizer.Initialize(this);
 
+            double deltaMax = 0;
+            double oldMod = _modilarity;
+            int num = 0;
             do
             {
-                int C, D;
-                _mergePriotizer.GetPrioritizedPair(out C, out D);
-                var delta = DeltaWeightOfMerge(Clustering[C], Clustering[D]);
+                int V;
+                int D;
 
-                Merge(Clustering[C], Clustering[D]);
-
-                var currM = WeightOfClustering();
-                var deltaM = currM - lastMod;
-                lastMod = currM;
-
-                ServiceSingletons.ClusterWindow.SetModularity(currM);
-
-                if (deltaM < 0 || Clustering.Count(t => t.Count > 0) == 4)
+                deltaMax = _vertexMovePriotizer.GetPrioritizedPair(out V, out D);
+                if (deltaMax < 0)
                     break;
+
+                Move(V, D);
+
+                ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
+                var delta = _modilarity - oldMod;
+                oldMod = _modilarity;
+                num++;
+
             } while (true);
 
             Renumber();
-        }*/
 
-        /*private void Renumber()
-        {
-            Clustering.RemoveAll(t => !t.Any());
-            Cluster.TotalCount = 0;
-            foreach (var cl in Clustering)
-            {
-                cl.Number = Cluster.TotalCount;
-                Cluster.TotalCount++;
-            }
-        }*/
+            /*
+            var testV = 5;
+            var testC = _cluster[testV];
+            var testD = 2;
+
+            var test = DeltaWeightOfMoving(testV, testD, 0);
+            var oldMod = _modilarity;
+            Move(testV, testD);
+            var newMod = _modilarity;
+            var actDelta = newMod - oldMod;
+            Move(testV, testC);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+
+            test = DeltaWeightOfMoving(testV, testD, 1);
+            oldMod = _modilarity;
+            Move(testV, testD);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+            Move(testV, testC);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+
+            test = DeltaWeightOfMoving(testV, testD, 2);
+            oldMod = _modilarity;
+            Move(testV, testD);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+            Move(testV, testC);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+
+            test = DeltaWeightOfMoving(testV, testD, 3);
+            oldMod = _modilarity;
+            Move(testV, testD);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;
+            Move(testV, testC);
+            newMod = _modilarity;
+            actDelta = newMod - oldMod;*/
+        }
+
 
         internal int Weight(int source, int target)
         {
@@ -177,34 +207,6 @@ namespace QuerySettingApplication
         {
             return targets.Sum(target => _matr[source, target]);
         }
-
-        /*internal int Weight(Cluster sources, Cluster targets)
-        {
-            return sources.Sum(source => Weight(source, targets));
-        }*/
-
-        //private Dictionary<Cluster, double> _degressCluster = new Dictionary<Cluster, double>();
-
-        /*internal double Degree(Cluster vertexes)
-        {
-            if (!_degressCluster.ContainsKey(vertexes))
-                _degressCluster.Add(vertexes, Weight(vertexes, vertexes));
-
-            return _degressCluster[vertexes];
-        }*/
-
-        /*internal double TempDegree(Cluster vertexes)
-        {
-            return Weight(vertexes, vertexes);
-        }*/
-
-        /*internal void ReCalcDegree(Cluster vertexes)
-        {
-            if (!_degressCluster.ContainsKey(vertexes))
-                _degressCluster.Add(vertexes, Weight(vertexes, vertexes));
-            else
-                _degressCluster[vertexes] = Weight(vertexes, vertexes);
-        }*/
 
         public int NumVertexes()
         {
@@ -234,31 +236,9 @@ namespace QuerySettingApplication
 
             _modilarity = result / EdgeCount();
         }
-        
+
         public double DeltaWeightOfMerge(int C, int D)
         {
-            /*if (IsAccurate)
-            {
-                var result = WeightOfClustering();
-
-                var newCl = new Cluster();
-                newCl.AddRange(C);
-                newCl.AddRange(D);
-                Clustering.Remove(C);
-                Clustering.Remove(D);
-                Clustering.Add(newCl);
-
-                result = WeightOfClustering() - result;
-
-                Clustering.Add(C);
-                Clustering.Add(D);
-                Clustering.Remove(newCl);
-
-                return result;
-            }
-            else*/
-                //return 2 * Weight(C, D) / DegreeVertexes() - 2 * Degree(C) * Degree(D) / Math.Pow(DegreeVertexes(), 2);
-            //return Weight(C, D) / EdgeCount() - Degree(C) * Degree(D) / Math.Pow(EdgeCount(), 2);
             double result = 0;
 
             var outs = new List<int>();
@@ -285,31 +265,101 @@ namespace QuerySettingApplication
 
             return result / EdgeCount();
         }
-        /*
-        internal Cluster GetTempCluster(Cluster C, int removingVertex)
-        {
-            var result = new TempCluster();
-            result.AddRange(C.Where(t => t != removingVertex));
-            return result;
-        }*/
-        /*
-        public double DeltaWeightOfMoving(int v, Cluster D)
-        {
-            return 0;
-        }*/
 
-        internal void Move(int v, int C)
+        public double DeltaWeightOfMoving(int v, int D)
         {
-            _cluster[v] = C;
-            /*var D = Clustering.GetContainigCluster(v);
-            D.Remove(v);
+            /*var C = _cluster[v];
+            var oldMod = _modilarity;
+            Move(v, D);
+            var res = _modilarity - oldMod;
+            Move(v, C);
+            return res;*/
 
-            C.Add(v);
-            ReCalcDegree(C);
-            ReCalcDegree(D);*/
+            var C = _cluster[v];
+
+            double result = 0;
+
+            var vC = new List<int>();
+            var vD = new List<int>();
+            var fvD = 0;
+            var fvC = 0;
+
+            for (int i = 0; i < _numV; i++)
+            {
+                if (_cluster[i] == C && i != v)
+                {
+                    vC.Add(i);
+                    fvC += _matr[i, v];
+                    continue;
+                }
+                if (_cluster[i] == D)
+                {
+                    vD.Add(i);
+                    fvD += _matr[v, i];
+                }
+            }
+
+            result += fvD - fvC;
+
+            switch (0)
+            {
+                case 0:
+                    foreach (var i in vD)
+                    {
+                        result -= (_outDegree[v] * _inDegree[i]) / EdgeCount();
+                    }
+
+                    foreach (var j in vC)
+                    {
+                        result += (_outDegree[j] * _inDegree[v]) / EdgeCount();
+                    }
+                    break;
+                case 1:
+                    foreach (var i in vD)
+                    {
+                        result -= (_inDegree[v] * _outDegree[i]) / EdgeCount();
+                    }
+
+                    foreach (var j in vC)
+                    {
+                        result += (_inDegree[j] * _outDegree[v]) / EdgeCount();
+                    }
+                    break;
+                case 2:
+                    foreach (var i in vD)
+                    {
+                        result -= (_outDegree[v] * _inDegree[i]) / EdgeCount();
+                    }
+
+                    foreach (var j in vC)
+                    {
+                        result += (_inDegree[j] * _outDegree[v]) / EdgeCount();
+                    }
+                    break;
+                case 3:
+                    foreach (var i in vD)
+                    {
+                        result -= (_inDegree[v] * _outDegree[i]) / EdgeCount();
+                    }
+
+                    foreach (var j in vC)
+                    {
+                        result += (_outDegree[j] * _inDegree[v]) / EdgeCount();
+                    }
+                    break;
+            }
+
+
+            return result / EdgeCount();
+        }
+
+        internal void Move(int v, int D)
+        {
+            var C = _cluster[v];
+            _cluster[v] = D;
+
             RecalcWeightOfClustering();
-
-            //_vertexMovePriotizer.OnMove(v, C, D, this);
+            _vertexMovePriotizer.OnMove(v, C, D, this);
         }
 
         internal void Merge(int C, int D)
@@ -324,16 +374,16 @@ namespace QuerySettingApplication
             _mergePriotizer.OnMerge(C, D, this);
         }
     }
-     
+
     public interface IClusterService
     {
         //Clustering Clustering { get; set; }
         int NumVertexes();
         double DeltaWeightOfMerge(int cl1, int cl2);
-        //double DeltaWeightOfMoving(int i, int cluster);
+        double DeltaWeightOfMoving(int i, int cluster);
 
         void Initialize(Graph graph, int num);
-        //void CG();
+        void CG();
         void SSG();
         int GetContainigCluster(int id);
         int NumClusters();
