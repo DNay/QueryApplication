@@ -13,11 +13,32 @@ namespace QuerySettingApplication
         }
     }
 
+    struct JSONResultInfo
+    {
+        [JsonProperty]
+        public ResultsInfo Results
+        {
+            get;
+            set;
+        }
+    }
+
     [JsonObject]
     struct Results
     {
         [JsonProperty]
         public Binding[] Bindings
+        {
+            get;
+            set;
+        }
+    }
+
+    [JsonObject]
+    struct ResultsInfo
+    {
+        [JsonProperty]
+        public BindingInfo[] Bindings
         {
             get;
             set;
@@ -36,6 +57,24 @@ namespace QuerySettingApplication
 
         [JsonProperty]
         public string Value
+        {
+            get;
+            set;
+        }
+    }
+
+    [JsonObject]
+    struct BindingInfo
+    {
+        [JsonProperty]
+        public Entity Date
+        {
+            get;
+            set;
+        }
+
+        [JsonProperty]
+        public Entity Author
         {
             get;
             set;

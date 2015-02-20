@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QuerySettingApplication
 {
-    internal class MergePriotizer// : IPriotizer
+    internal class MergePriotizer<T> where T : Vertex, new() // : IPriotizer
     {
         class WeigthedPair : IComparable
         {

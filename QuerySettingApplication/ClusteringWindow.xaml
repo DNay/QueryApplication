@@ -6,7 +6,7 @@
         Title="Clustering window" Name="ClWin" Height="478" Width="695" Icon="Resource/rdf-128.png"
         DataContext="{Binding RelativeSource={RelativeSource Self}}" ResizeMode="NoResize">
     <Grid>
-        <GroupBox Header="Команды" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="10,10,0,0">
+        <GroupBox Header="Команды" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="10,57,0,0">
             <Grid>
                 <Button Name="InitializeButton" Content="Initialize" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="InitializeButton_OnClick"/>
                 <TextBox Name="NumInOneClusterText" HorizontalAlignment="Left" Height="25" Margin="95,10,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="79"/>
@@ -32,6 +32,12 @@
                    Text="{Binding Path=ModularityText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <TreeView Name="ClusterTree" HorizontalAlignment="Left" Height="403" Margin="214,35,0,0" VerticalAlignment="Top" Width="463" 
                   ItemsSource="{Binding Path=TreeItems,  UpdateSourceTrigger=PropertyChanged}"  MouseDoubleClick="ClusterTree_OnMouseDoubleClick"/>
-        <Button Content="Нарисовать в браузере" HorizontalAlignment="Left" Height="25" Margin="10,275,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowser_OnClick"/>
+        <TextBlock HorizontalAlignment="Left" Height="25" Margin="10,301,0,0" TextWrapping="Wrap" Text="Нарисовать:" VerticalAlignment="Top" Width="Auto"/>
+        <Button Content="Круговой" HorizontalAlignment="Left" Height="25" Margin="10,386,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRound_OnClick"/>
+        <Button Content="Со случайным расположением" HorizontalAlignment="Left" Height="25" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRandom_OnClick"/>
+        <Button Content="Учитывая время" HorizontalAlignment="Left" Height="25" Margin="10,326,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserTime_OnClick"/>
+        <Button  HorizontalAlignment="Left" Height="45" Margin="10,7,0,0" VerticalAlignment="Top" Width="199" Click="ClusterWithAnotherGraph_OnClick" IsEnabled="{Binding ClusteringWithAnotherEnabled}">
+            <TextBlock TextWrapping="WrapWithOverflow">Получить кластеризацию на основе другого графа</TextBlock>
+        </Button>
     </Grid>
 </Window>

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QuerySettingApplication
 {
-    internal class VertexMovePriotizer// : IPriotizer
+    internal class VertexMovePriotizer<T> where T : Vertex, new()// : IPriotizer
     {
         class WeigthedPair : IComparable
         {

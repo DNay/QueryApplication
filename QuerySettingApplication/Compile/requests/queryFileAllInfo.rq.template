@@ -1,0 +1,10 @@
+PREFIX akt:  <http://www.aktors.org/ontology/portal#>
+
+SELECT DISTINCT ?date ?author
+FROM <http://dig.csail.mit.edu/2008/webdav/timbl/foaf.rdf>
+WHERE { 
+  SERVICE <$TEMPLATE_SERVICE$> { 
+  <$TEMPLATE_ENTITY$> akt:has-date ?date.
+  <$TEMPLATE_ENTITY$> akt:has-author ?author.
+  }
+}

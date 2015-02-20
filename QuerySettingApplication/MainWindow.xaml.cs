@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Serialization;
@@ -58,7 +60,7 @@ namespace QuerySettingApplication
             {
                 try
                 {
-                    var serializer = new XmlSerializer(typeof(Graph));
+                    var serializer = new XmlSerializer(typeof(CiteNet));
                     var fileStream = File.Create(saveDialog.FileName);
                     serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.CiteNet);
                     fileStream.Close();
@@ -68,7 +70,7 @@ namespace QuerySettingApplication
                     fileStreamJ.Write(strJ);
                     fileStreamJ.Close();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                 }
             }
@@ -81,12 +83,12 @@ namespace QuerySettingApplication
 
             if (openDialog.ShowDialog() == true)
             {
-                var serializer = new XmlSerializer(typeof (Graph));
+                var serializer = new XmlSerializer(typeof(CiteNet));
                 var fileStream = File.OpenRead(openDialog.FileName);
 
                 try
                 {
-                    var graph = serializer.Deserialize(fileStream) as Graph;
+                    var graph = serializer.Deserialize(fileStream) as CiteNet;
                     ServiceSingletons.QueryProcessor.CiteNet = graph;
                     fileStream.Close();
                     UpdateFields();
@@ -113,7 +115,7 @@ namespace QuerySettingApplication
             {
                 try
                 {
-                    var serializer = new XmlSerializer(typeof(Graph));
+                    var serializer = new XmlSerializer(typeof(AuthorsGraph));
                     var fileStream = File.Create(saveDialog.FileName);
                     serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.GraphAuthors);
                     fileStream.Close();
@@ -136,12 +138,12 @@ namespace QuerySettingApplication
 
             if (openDialog.ShowDialog() == true)
             {
-                var serializer = new XmlSerializer(typeof (Graph));
+                var serializer = new XmlSerializer(typeof(AuthorsGraph));
                 var fileStream = File.OpenRead(openDialog.FileName);
 
                 try
                 {
-                    var graph = serializer.Deserialize(fileStream) as Graph;
+                    var graph = serializer.Deserialize(fileStream) as AuthorsGraph;
                     ServiceSingletons.QueryProcessor.GraphAuthors = graph;
                     fileStream.Close();
                     UpdateFields();
@@ -161,25 +163,27 @@ namespace QuerySettingApplication
 
         private void Authors_Click(object sender, RoutedEventArgs e)
         {
-            ServiceSingletons.QueryProcessor.GetAuthors();
+            ServiceSingletons.QueryProcessor.GetAuthors2();
         }
 
         private void UpdateFields()
         {
             NumVertexesProp = ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Count;
             NumEdgesProp = ServiceSingletons.QueryProcessor.CiteNet.Edges.Count;
+            NumVertexesAuthProp = ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Count.ToString();
+            NumEdgesAuthProp = ServiceSingletons.QueryProcessor.GraphAuthors.Edges.Count.ToString();
             RaisePropertyChanged("IsClusteringEnabled");
         }
 
         private void Cluster_Click(object sender, RoutedEventArgs e)
         {
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet);
+            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet, ServiceSingletons.ClusterService);
             clusterWindow.Show();
         }
 
         private void ClusterAuth_Click(object sender, RoutedEventArgs e)
         {
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors);
+            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors, ServiceSingletons.ClusterAuthService);
             clusterWindow.Show();
         }
 

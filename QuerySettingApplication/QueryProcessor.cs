@@ -11,9 +11,10 @@ namespace QuerySettingApplication
     {
         private string _queryFileOut = "requests\\queryFileOut.rq";
         private string _queryFileIn = "requests\\queryFileIn.rq";
+        private string _queryFileInfo = "requests\\queryFileAllInfo.rq";
         private string _outFile = "outs\\out.json";
-        private Graph _citeNet = new Graph();
-        private Graph _graphAuthors = new Graph();
+        private CiteNet _citeNet = new CiteNet();
+        private AuthorsGraph _graphAuthors = new AuthorsGraph();
         private List<string> processedVertexes = new List<string>();
         private List<string> preparedVertexes = new List<string>();
         private Dictionary<string, string> _services = new Dictionary<string, string>();
@@ -23,15 +24,16 @@ namespace QuerySettingApplication
         public QueryProcessor()
         {
             _services.Add("acm", "http://acm.rkbexplorer.com/sparql");
+            _services.Add("dblp", "http://dblp.rkbexplorer.com/sparql");
         }
 
-        public Graph CiteNet
+        public CiteNet CiteNet
         {
             get { return _citeNet; }
             set { _citeNet = value; }
         }
 
-        public Graph GraphAuthors
+        public AuthorsGraph GraphAuthors
         {
             get { return _graphAuthors; }
             set { _graphAuthors = value; }
@@ -69,7 +71,7 @@ namespace QuerySettingApplication
         public void GetAuthors()
         {
             preparedVertexes.Clear();
-            preparedVertexes.AddRange(CiteNet.Vertexes.Select(t => t.Texts.First()).Where(t => t != null));
+            preparedVertexes.AddRange(CiteNet.Vertexes.Select(t => t.Name).Where(t => t != null));
 
             foreach (var currentEntity in preparedVertexes)
             {
@@ -89,11 +91,47 @@ namespace QuerySettingApplication
 
             foreach (var edge in CiteNet.Edges)
             {
-                if (!_authors.ContainsKey(CiteNet.Vertexes[edge.source].Texts.First()) || !_authors.ContainsKey(CiteNet.Vertexes[edge.target].Texts.First()))
+                if (!_authors.ContainsKey(CiteNet.Vertexes[edge.source].Name) || !_authors.ContainsKey(CiteNet.Vertexes[edge.target].Name))
                     continue;
 
-                var sources = _authors[CiteNet.Vertexes[edge.source].Texts.First()];
-                var targets = _authors[CiteNet.Vertexes[edge.target].Texts.First()];
+                var sources = _authors[CiteNet.Vertexes[edge.source].Name];
+                var targets = _authors[CiteNet.Vertexes[edge.target].Name];
+
+                if (sources == null || targets == null)
+                    continue;
+
+                foreach (var source in sources)
+                {
+                    foreach (var target in targets)
+                    {
+                        var newEdge = new Edge(GraphAuthors.GetVertexId(source), GraphAuthors.GetVertexId(target));
+                        GraphAuthors.AddEdge(newEdge);
+                    }
+                }
+            }
+        }
+
+        public void GetAuthors2()
+        {
+            foreach (VertexPublication vert in CiteNet.Vertexes)
+            {
+                _authors.Add(vert.Name, vert.Authors);
+
+                foreach (var auth in vert.Authors)
+                {
+                    _graphAuthors.AddVertex(auth);
+                }
+
+                ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
+            }
+
+            foreach (var edge in CiteNet.Edges)
+            {
+                if (!_authors.ContainsKey(CiteNet.Vertexes[edge.source].Name) || !_authors.ContainsKey(CiteNet.Vertexes[edge.target].Name))
+                    continue;
+
+                var sources = _authors[CiteNet.Vertexes[edge.source].Name];
+                var targets = _authors[CiteNet.Vertexes[edge.target].Name];
 
                 if (sources == null || targets == null)
                     continue;
@@ -108,49 +146,14 @@ namespace QuerySettingApplication
                 }
             }
 
-            var authClusters = new Dictionary<string, Dictionary<int, int>>();
-
-            foreach (var vertex in CiteNet.Vertexes)
-            {
-                var publ = vertex.Texts.First();
-
-                if (!_authors.ContainsKey(publ))
-                    continue;
-
-                foreach (var author in _authors[publ])
-                {
-                    if (!authClusters.ContainsKey(author))
-                        authClusters.Add(author, new Dictionary<int, int>());
-
-                    if (!authClusters[author].ContainsKey(vertex.Cluster))
-                        authClusters[author].Add(vertex.Cluster, 0);
-
-                    authClusters[author][vertex.Cluster]++;
-                }
-            }
-
-            foreach (var cluster in authClusters)
-            {
-                var cl = cluster.Value.Keys.First();
-                var max = cluster.Value.Values.First();
-                foreach (var pair in cluster.Value)
-                {
-                    if (max < pair.Value)
-                    {
-                        cl = pair.Key;
-                        max = pair.Value;
-                    }
-                }
-
-                GraphAuthors.GetVertex(cluster.Key).Cluster = cl;
-            }
+            ServiceSingletons.MainWindow.NumEdgesAuthProp = GraphAuthors.Edges.Count.ToString();
         }
 
         private void ProcessAuthorQuery(string currentEntity)
         {
             var reqFile = GenerateRequest(_queryFileOut, GetService(currentEntity), currentEntity, "akt:has-author");
 
-            var jsonResult = ProcessAnyQuery(reqFile);
+            var jsonResult = ProcessAnyQuery<JSONResult>(reqFile);
 
             var auths = jsonResult.Results.Bindings.Select(t => t.Entity).Select(t => t.Value).ToList();
             _authors.Add(currentEntity, new List<string>(auths));
@@ -169,6 +172,7 @@ namespace QuerySettingApplication
             {
                 ProcessInQuery(predicate, currentEntity);
                 ProcessOutQuery(predicate, currentEntity);
+                ProcessInfoQuery(currentEntity);
             }
             catch (Exception ex)
             {
@@ -176,11 +180,32 @@ namespace QuerySettingApplication
             } 
         }
 
+        private void ProcessInfoQuery(string currentEntity)
+        {
+            var reqFile = GenerateRequest(_queryFileInfo, GetService(currentEntity), currentEntity, string.Empty);
+
+            var jsonResult = ProcessAnyQuery<JSONResultInfo>(reqFile);
+            var dates = jsonResult.Results.Bindings.Select(t =>
+            {
+                var text = t.Date.Value;
+                text = text.Replace("http://www.aktors.org/ontology/date#",
+                    string.Empty);
+                return DateTime.Parse(text);
+            }).Distinct().ToList();
+
+            var authors = jsonResult.Results.Bindings.Select(t => t.Author.Value).Distinct().ToList();
+
+            var curVert = CiteNet.GetVertex(currentEntity);
+
+            curVert.Date = dates.Max();
+            curVert.Authors = authors;
+        }
+
         private void ProcessInQuery(string predicate, string currentEntity)
         {
             var reqFile = GenerateRequest(_queryFileIn, GetService(currentEntity), currentEntity, predicate);
 
-            var jsonResult = ProcessAnyQuery(reqFile);
+            var jsonResult = ProcessAnyQuery<JSONResult>(reqFile);
 
             if (jsonResult.Results.Bindings.Length <= 50)
             {
@@ -203,7 +228,7 @@ namespace QuerySettingApplication
         {
             var reqFile = GenerateRequest(_queryFileOut, GetService(currentEntity), currentEntity, predicate);
 
-            var jsonResult = ProcessAnyQuery(reqFile);
+            var jsonResult = ProcessAnyQuery<JSONResult>(reqFile);
 
             if (jsonResult.Results.Bindings.Length <= 50)
             {
@@ -222,14 +247,14 @@ namespace QuerySettingApplication
                                                     .Where(s => !_citeNet.Edges.Contains(s)));
         }
 
-        private JSONResult ProcessAnyQuery(string reqFile)
+        private T ProcessAnyQuery<T>(string reqFile)
         {
             var command = "jruby s-query --service=http://localhost:3030/sparql --query=\"..\\" + reqFile + "\" > \"..\\" +
                           _outFile + "\"";
             ServiceSingletons.JenaFusekiHelper.SendQuery(command);
 
             var file = File.ReadAllText(_outFile);
-            var jsonResult = JsonConvert.DeserializeObject<JSONResult>(file);
+            var jsonResult = JsonConvert.DeserializeObject<T>(file);
 
             return jsonResult;
         }

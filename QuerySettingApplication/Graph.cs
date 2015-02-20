@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
@@ -8,13 +9,15 @@ namespace QuerySettingApplication
 {
     [JsonObject]
     [Serializable]
+    [XmlInclude(typeof(VertexPublication))]
     public class Vertex
     {
-        public Vertex(){ }
+        public Vertex()
+        { }
 
-        public Vertex(string text)
+        public Vertex(string name)
         {
-            Texts = new List<string> {text};
+            Name = name;
         }
 
         [JsonProperty]
@@ -26,8 +29,8 @@ namespace QuerySettingApplication
         public int Cluster { get; set; }
 
         [JsonProperty]
-        [XmlElement("Texts")] 
-        public List<string> Texts { get; set; }
+        [XmlElement("Name")]
+        public string Name { get; set; }
 
         [JsonProperty]
         public double X { get; set; }
@@ -44,6 +47,28 @@ namespace QuerySettingApplication
             return otherVertex != null && otherVertex.Id == Id;
         }
     }
+
+    [JsonObject]
+    [Serializable]
+    public class VertexPublication : Vertex
+    {
+        public VertexPublication()
+        { }
+        public VertexPublication(string name, List<string> authors = null, DateTime date = default(DateTime)) : base(name)
+        {
+            Authors = authors;
+            Date = date;
+        }
+
+        [JsonProperty]
+        [XmlElement("Authors")]
+        public List<string> Authors { get; set; }
+
+        [JsonProperty]
+        [XmlElement("Date")]
+        public DateTime Date { get; set; }
+    }
+
 
     [JsonObject]
     [Serializable]
@@ -76,9 +101,15 @@ namespace QuerySettingApplication
         }
     }
 
+    public interface IGraph
+    {
+        List<Vertex> Vertexes { get; set; }
+        List<Edge> Edges { get; set; }
+    }
+
     [JsonObject]
     [Serializable]
-    public class Graph
+    public class Graph<T> : IGraph where T : Vertex, new()
     {
         public Graph()
         {
@@ -87,7 +118,7 @@ namespace QuerySettingApplication
             Edges = new List<Edge>();
         }
 
-        public Vertex AddVertex(string name)
+        public virtual T AddVertex(string name)
         {
             var cur = GetVertex(name);
             if (cur != null)
@@ -95,7 +126,7 @@ namespace QuerySettingApplication
                 return cur;
             }
 
-            var newVer = new Vertex(name) {Id = NumVertexes++};
+            var newVer = new T {Id = NumVertexes++, Name = name};
             Vertexes.Add(newVer);
             return newVer;
         }
@@ -112,9 +143,9 @@ namespace QuerySettingApplication
             return edge;
         }
 
-        public Vertex GetVertex(string name)
+        public virtual T GetVertex(string name)
         {
-            return Vertexes.FirstOrDefault(t => t.Texts.Contains(name));
+            return Vertexes.FirstOrDefault(t => t.Name == name) as T;
         }
         public Edge GetEdge(Edge edge)
         {
@@ -123,7 +154,7 @@ namespace QuerySettingApplication
 
         public int GetVertexId(string name)
         {
-            var firstOrDefault = Vertexes.FirstOrDefault(t => t.Texts.Contains(name));
+            var firstOrDefault = Vertexes.FirstOrDefault(t => t.Name == name);
             return firstOrDefault != null ? firstOrDefault.Id : -1;
         }
 
@@ -138,5 +169,25 @@ namespace QuerySettingApplication
         [JsonProperty]
         [XmlElement("Edges")]
         public List<Edge> Edges { get; set; }
+    }
+
+    [JsonObject]
+    [Serializable]
+    public class CiteNet : Graph<VertexPublication>
+    {
+        public virtual VertexPublication AddVertex(string name, List<string> authors, DateTime date)
+        {
+            var newVert = base.AddVertex(name);
+            newVert.Authors = authors;
+            newVert.Date = date;
+
+            return newVert;
+        }
+    }
+
+    [JsonObject]
+    [Serializable]
+    public class AuthorsGraph : Graph<Vertex>
+    {
     }
 }

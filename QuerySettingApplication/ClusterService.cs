@@ -80,6 +80,37 @@ namespace QuerySettingApplication
         private int _numE;
         private double _modilarity;
 
+        public void SetGraph(IGraph graph)
+        {
+            SetGraph(graph as Graph<T>);
+        }
+
+        public void SetGraph(Graph<T> graph)
+        {
+            _numV = graph.NumVertexes;
+            _numE = graph.Edges.Count;
+            _inDegree = new double[_numV];
+            _outDegree = new double[_numV];
+            _cluster = new int[_numV];
+            _matr = new int[_numV, _numV];
+
+            foreach (var vertex in graph.Vertexes)
+            {
+                _cluster[vertex.Id] = vertex.Cluster;
+            }
+
+            foreach (var edge in graph.Edges)
+            {
+                _inDegree[edge.target]++;
+                _outDegree[edge.source]++;
+
+                _matr[edge.source, edge.target] = 1;
+                _matr[edge.target, edge.source] = 1;
+            }
+            RecalcWeightOfClustering();
+            ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
+        }
+
         public void Initialize(Graph graph, int num)
         {
             Clustering = new Clustering();
@@ -188,7 +219,7 @@ namespace QuerySettingApplication
             Renumber();
         }
 
-        private void Renumber()
+        public void Renumber()
         {
             Clustering.RemoveAll(t => !t.Any());
             Cluster.TotalCount = 0;
@@ -255,8 +286,11 @@ namespace QuerySettingApplication
             return _numE;
         }
 
-        internal double WeightOfClustering()
+        public double WeightOfClustering()
         {
+            if (_modilarity == 0)
+                RecalcWeightOfClustering();
+
             return _modilarity;
         }
 

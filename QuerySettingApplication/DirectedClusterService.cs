@@ -5,14 +5,14 @@ using Gecko;
 
 namespace QuerySettingApplication
 {
-    public class DirectedClusterService : IClusterService
+    public class DirectedClusterService<T> : IClusterService where T : Vertex, new()
     {
         //public Clustering Clustering { get; set; }
 
         //private List<EdgeWrapper> Edges = new List<EdgeWrapper>();
 
-        private MergePriotizer _mergePriotizer = new MergePriotizer();
-        private VertexMovePriotizer _vertexMovePriotizer = new VertexMovePriotizer();
+        private MergePriotizer<T> _mergePriotizer = new MergePriotizer<T>();
+        private VertexMovePriotizer<T> _vertexMovePriotizer = new VertexMovePriotizer<T>();
         private bool IsAccurate = false;
 
         private int _numV;
@@ -23,8 +23,44 @@ namespace QuerySettingApplication
         private int[,] _matr;
         private int[] _cluster;
 
-        public void Initialize(Graph graph, int num)
+        public void SetGraph(IGraph graph)
         {
+            SetGraph(graph as Graph<T>);
+        }
+
+        public void SetGraph(Graph<T> graph)
+        {
+            _numV = graph.NumVertexes;
+            _numE = graph.Edges.Count;
+            _inDegree = new double[_numV];
+            _outDegree = new double[_numV];
+            _cluster = new int[_numV];
+            _matr = new int[_numV, _numV];
+
+            foreach (var vertex in graph.Vertexes)
+            {
+                _cluster[vertex.Id] = vertex.Cluster;
+            }
+
+            foreach (var edge in graph.Edges)
+            {
+                _inDegree[edge.target]++;
+                _outDegree[edge.source]++;
+
+                _matr[edge.source, edge.target] = 1;
+            }
+            RecalcWeightOfClustering();
+            ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
+        }
+
+        public void Initialize(IGraph graph, int num)
+        {
+            Initialize(graph as Graph<T>, num);
+        }
+
+        private void Initialize(Graph<T> graph, int num)
+        {
+
             //Clustering.Clear();
             //Cluster.TotalCount = 0;
 
@@ -57,7 +93,7 @@ namespace QuerySettingApplication
             ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
         }
 
-        private void Renumber()
+        public void Renumber()
         {
             var cluster = new int[_numV];
             var convertNumbers = new Dictionary<int, int>();
@@ -218,8 +254,11 @@ namespace QuerySettingApplication
             return _numE;
         }
 
-        internal double WeightOfClustering()
+        public double WeightOfClustering()
         {
+            if (_modilarity == 0)
+                RecalcWeightOfClustering();
+
             return _modilarity;
         }
 
@@ -381,11 +420,15 @@ namespace QuerySettingApplication
         int NumVertexes();
         double DeltaWeightOfMerge(int cl1, int cl2);
         double DeltaWeightOfMoving(int i, int cluster);
+        void SetGraph(IGraph graph);
 
-        void Initialize(Graph graph, int num);
+        void Initialize(IGraph graph, int num);
         void CG();
         void SSG();
         int GetContainigCluster(int id);
         int NumClusters();
+        void Renumber();
+
+        double WeightOfClustering();
     }
 }
