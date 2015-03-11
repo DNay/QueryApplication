@@ -9,7 +9,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace QuerySettingApplication
 {
-    public class DirectedClusterService<T> : IClusterService where T : Vertex, new()
+    public class PageRankDirectedClusterService<T> : IClusterService where T : Vertex, new()
     {
         //public Clustering Clustering { get; set; }
 
@@ -24,8 +24,11 @@ namespace QuerySettingApplication
         private double _modilarity;
         private double[] _inDegree;
         private double[] _outDegree;
-        private int[,] _matr;
+        private Matrix<double> A;
         private int[] _cluster;
+        private Matrix<double> L;
+        private Matrix<double> P;
+        private Vector<double> pi;
 
         public void SetGraph(IGraph graph)
         {
@@ -39,8 +42,7 @@ namespace QuerySettingApplication
             _inDegree = new double[_numV];
             _outDegree = new double[_numV];
             _cluster = new int[_numV];
-            _matr = new int[_numV, _numV];
-
+            A = Matrix<double>.Build.Dense(_numV, _numV);
             foreach (var vertex in graph.Vertexes)
             {
                 _cluster[vertex.Id] = vertex.Cluster;
@@ -51,10 +53,50 @@ namespace QuerySettingApplication
                 _inDegree[edge.target]++;
                 _outDegree[edge.source]++;
 
-                _matr[edge.source, edge.target] = 1;
+                A[edge.source, edge.target] = 1;
             }
+
+            var G = Matrix<double>.Build.Dense(_numV, _numV, CalcGij);
+            var t = Vector<double>.Build.Dense(_numV);
+            t.At(0, 1);
+
+            Vector<double> k;
+
+            do
+            {
+                k = t;
+                t = t*G;
+                Console.Write(t.ToString());
+                Console.WriteLine();
+            } while ((k - t).Norm(2) > 0.0001);
+
+            pi = t;
+            L = Matrix<double>.Build.Dense(_numV, _numV, (i, j) => pi.At(i) * G[i, j]);
+            P = Matrix<double>.Build.Dense(_numV, _numV, (i, j) => L[i, j] - pi[i] * pi[j]);
             RecalcWeightOfClustering();
             ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
+        }
+
+        private double CalcGij(int i, int j)
+        {
+            const double alpha = 0.85;
+
+            var sum = _outDegree[i];
+            var a = sum == 0 ? 1.0 : 0.0;
+            var f = sum == 0 ? 0.0 : alpha*A[i, j] / sum;
+            return f + (alpha * a + 1.0 - alpha) / _numV;
+        }
+
+        private double CalcGijMarkov(int i, int j)
+        {
+            if (A[i, j] == 0)
+                return 0;
+
+            var sum = 0.0;
+            for (int k = 0; k < _numV; k++)
+                sum += A[i, k];
+
+            return 1 / sum;
         }
 
         public void Initialize(IGraph graph, int num)
@@ -164,9 +206,9 @@ namespace QuerySettingApplication
         }
 
 
-        internal int Weight(int source, int target)
+        internal double Weight(int source, int target)
         {
-            return _matr[source, target];
+            return A[source, target];
         }
 
         internal double InDegree(int vertex)
@@ -184,9 +226,9 @@ namespace QuerySettingApplication
             return _cluster[i] == _cluster[j] ? 1 : 0;
         }
 
-        internal int Weight(int source, List<int> targets)
+        internal double Weight(int source, List<int> targets)
         {
-            return targets.Sum(target => _matr[source, target]);
+            return targets.Sum(target => A[source, target]);
         }
 
         public int NumVertexes()
@@ -214,41 +256,32 @@ namespace QuerySettingApplication
             {
                 for (int j = 0; j < _numV; j++)
                 {
-                    result += (_matr[i, j] - (_outDegree[i] * _inDegree[j]) / EdgeCount()) * IsInSameCluster(i, j);
+                    result += P[i, j] * IsInSameCluster(i, j);
                 }
             }
 
-            _modilarity = result / EdgeCount();
+            _modilarity = result;
             Console.WriteLine(_modilarity);
         }
 
         public double DeltaWeightOfMerge(int C, int D)
         {
-            double result = 0;
-
-            var outs = new List<int>();
-            var ins = new List<int>();
+            var Cs = new List<int>();
+            var Ds = new List<int>();
 
             for (int i = 0; i < _numV; i++)
             {
                 if (_cluster[i] == C)
                 {
-                    outs.Add(i);
+                    Cs.Add(i);
                     continue;
                 }
                 if (_cluster[i] == D)
-                    ins.Add(i);
+                    Ds.Add(i);
             }
-
-            foreach (var i in ins)
-            {
-                foreach (var j in outs)
-                {
-                    result += (_matr[i, j] - (_outDegree[i] * _inDegree[j]) / EdgeCount());
-                }
-            }
-
-            return result / EdgeCount();
+            var res = (from i in Cs from j in Ds select P[i, j]).Sum();
+            res += (from i in Ds from j in Cs select P[i, j]).Sum();
+            return res;
         }
 
         public double DeltaWeightOfMoving(int v, int D)
@@ -259,76 +292,29 @@ namespace QuerySettingApplication
 
             var vC = new List<int>();
             var vD = new List<int>();
-            var fvD = 0;
-            var fvC = 0;
+            var fvD = 0.0;
+            var fvC = 0.0;
 
             for (int i = 0; i < _numV; i++)
             {
                 if (_cluster[i] == C && i != v)
                 {
                     vC.Add(i);
-                    fvC += _matr[i, v];
+                    fvC += P[i, v];
+                    fvC += P[v, i];
                     continue;
                 }
                 if (_cluster[i] == D)
                 {
                     vD.Add(i);
-                    fvD += _matr[v, i];
+                    fvD += P[i, v];
+                    fvD += P[v, i];
                 }
             }
 
-            result += fvD - fvC;
+            result = fvD - fvC;
 
-            switch (0)
-            {
-                case 0:
-                    foreach (var i in vD)
-                    {
-                        result -= (_outDegree[v] * _inDegree[i]) / EdgeCount();
-                    }
-
-                    foreach (var j in vC)
-                    {
-                        result += (_outDegree[j] * _inDegree[v]) / EdgeCount();
-                    }
-                    break;
-                case 1:
-                    foreach (var i in vD)
-                    {
-                        result -= (_inDegree[v] * _outDegree[i]) / EdgeCount();
-                    }
-
-                    foreach (var j in vC)
-                    {
-                        result += (_inDegree[j] * _outDegree[v]) / EdgeCount();
-                    }
-                    break;
-                case 2:
-                    foreach (var i in vD)
-                    {
-                        result -= (_outDegree[v] * _inDegree[i]) / EdgeCount();
-                    }
-
-                    foreach (var j in vC)
-                    {
-                        result += (_inDegree[j] * _outDegree[v]) / EdgeCount();
-                    }
-                    break;
-                case 3:
-                    foreach (var i in vD)
-                    {
-                        result -= (_inDegree[v] * _outDegree[i]) / EdgeCount();
-                    }
-
-                    foreach (var j in vC)
-                    {
-                        result += (_outDegree[j] * _inDegree[v]) / EdgeCount();
-                    }
-                    break;
-            }
-
-
-            return result / EdgeCount();
+            return result;
         }
 
         internal void Move(int v, int D)
@@ -351,22 +337,5 @@ namespace QuerySettingApplication
 
             _mergePriotizer.OnMerge(C, D, this);
         }
-    }
-
-    public interface IClusterService
-    {
-        int NumVertexes();
-        double DeltaWeightOfMerge(int cl1, int cl2);
-        double DeltaWeightOfMoving(int i, int cluster);
-        void SetGraph(IGraph graph);
-
-        void Initialize(IGraph graph, int num);
-        void CG();
-        void SSG();
-        int GetContainigCluster(int id);
-        int NumClusters();
-        void Renumber();
-
-        double WeightOfClustering();
     }
 }

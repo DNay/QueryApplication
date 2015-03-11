@@ -297,6 +297,7 @@ namespace QuerySettingApplication
         internal void RecalcWeightOfClustering()
         {
             _modilarity = Clustering.Sum(cluster => ((Degree(cluster) / DegreeVertexes()) - (Math.Pow(Degree(cluster), 2) / Math.Pow(DegreeVertexes(), 2))));
+            Console.WriteLine(_modilarity);
         }
 
         public double DeltaWeightOfMerge(Cluster C, Cluster D)

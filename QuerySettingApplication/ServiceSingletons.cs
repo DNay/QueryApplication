@@ -18,14 +18,14 @@
 
         public static MainWindow MainWindow { get; set; }
 
-        private static IClusterService _clusterService = new DirectedClusterService<VertexPublication>();//ClusterService();
+        private static IClusterService _clusterService = new PageRankDirectedClusterService<VertexPublication>();//ClusterService();
 
         public static IClusterService ClusterService
         {
             get { return _clusterService; }
         }
 
-        private static IClusterService _clusterAuthService = new DirectedClusterService<Vertex>();//ClusterService();
+        private static IClusterService _clusterAuthService = new PageRankDirectedClusterService<Vertex>();//ClusterService();
 
         public static IClusterService ClusterAuthService
         {
