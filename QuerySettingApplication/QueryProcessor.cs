@@ -11,7 +11,7 @@ namespace QuerySettingApplication
     {
         private string _queryFileOut = "requests\\queryFileOut.rq";
         private string _queryFileIn = "requests\\queryFileIn.rq";
-        private string _queryFileInfo = "requests\\queryFileAllInfo.rq";
+        private string _queryFileInfo = "requests\\queryFileAll.rq";
         private string _outFile = "outs\\out.json";
         private CiteNet _citeNet = new CiteNet();
         private AuthorsGraph _graphAuthors = new AuthorsGraph();
@@ -185,18 +185,21 @@ namespace QuerySettingApplication
             var reqFile = GenerateRequest(_queryFileInfo, GetService(currentEntity), currentEntity, string.Empty);
 
             var jsonResult = ProcessAnyQuery<JSONResultInfo>(reqFile);
-            var dates = jsonResult.Results.Bindings.Select(t =>
-            {
-                var text = t.Date.Value;
-                text = text.Replace("http://www.aktors.org/ontology/date#",
-                    string.Empty);
-                return DateTime.Parse(text);
-            }).Distinct().ToList();
+            var infos = jsonResult.Results.Bindings.Select(t => new RdfInfo(t.P.Value, t.S.Value)).Distinct().ToList();
 
-            var authors = jsonResult.Results.Bindings.Select(t => t.Author.Value).Distinct().ToList();
+            var authors = infos.Where(t => t.Predicate.Contains("has-author")).Select(t => t.Subject).Distinct().ToList();
+            var dates = infos.Where(t => t.Predicate.Contains("has-date")).Select(t => 
+                                                                        {
+                                                                            var text = t.Subject;
+                                                                            text = text.Replace("http://www.aktors.org/ontology/date#",
+                                                                                string.Empty);
+                                                                            return DateTime.Parse(text);
+                                                                        })
+                                                                        .Distinct().ToList();
 
             var curVert = CiteNet.GetVertex(currentEntity);
 
+            curVert.Infos = infos;
             curVert.Date = dates.Max();
             curVert.Authors = authors;
         }

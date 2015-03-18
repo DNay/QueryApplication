@@ -67,14 +67,14 @@ namespace QuerySettingApplication
     struct BindingInfo
     {
         [JsonProperty]
-        public Entity Date
+        public Entity P
         {
             get;
             set;
         }
 
         [JsonProperty]
-        public Entity Author
+        public Entity S
         {
             get;
             set;

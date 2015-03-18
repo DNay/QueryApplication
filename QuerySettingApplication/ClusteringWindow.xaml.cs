@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using MoreLinq;
 using Newtonsoft.Json;
 
 namespace QuerySettingApplication
@@ -73,6 +75,21 @@ namespace QuerySettingApplication
             RefCG.IsEnabled = true;
         }
 
+        private void MSG_OnClick(object sender, RoutedEventArgs e)
+        {
+            var text = MergeFactor.Text;
+            Task.Factory.StartNew(() =>
+            {
+                double factor;
+                if (double.TryParse(text, out factor))
+                {
+                    _clustService.MSG(factor);
+                    UpdateGroupsGraph();
+                }
+            });
+            RefCG.IsEnabled = true;
+        }
+
         private void RefCG_OnClick(object sender, RoutedEventArgs e)
         {
             Task.Factory.StartNew(() =>
@@ -115,6 +132,62 @@ namespace QuerySettingApplication
                      var item = new TreeViewItem();
                      item.Header = vertex.Name;
                      clusters[vertex.Cluster].Items.Add(item);
+                }
+
+                for (int i = 0; i < numCl; i++)
+                {
+                    clusters[i].Header = "Cluster " + i + " (" + clusters[i].Items.Count + " items)";
+
+                    res.Add(clusters[i]);
+                }
+
+                return res;
+            }
+        }
+
+        public ObservableCollection<TreeViewItem> InfoItems
+        {
+            get
+            {
+                //build tree
+                var res = new ObservableCollection<TreeViewItem>();
+
+                if (_graph.Vertexes.Count == 0)
+                    return res;
+
+                var numCl = _graph.Vertexes.Select(t => t.Cluster).Max() + 1;
+
+                var clusters = new TreeViewItem[numCl];
+
+                for (int i = 0; i < numCl; i++)
+                    clusters[i] = new TreeViewItem();
+
+                var clusterInfos = new Dictionary<RdfInfo, int>[numCl];
+                for (int index = 0; index < numCl; index++)
+                    clusterInfos[index] = new Dictionary<RdfInfo, int>();
+                var entNum = new int[numCl];
+
+                foreach (var vertex in _graph.Vertexes)
+                {
+                    var cl = vertex.Cluster;
+                    entNum[cl]++;
+                    foreach (var info in vertex.Infos)
+                    {
+                        if (!clusterInfos[cl].ContainsKey(info))
+                            clusterInfos[cl].Add(info, 0);
+                        clusterInfos[cl][info]++;
+                    }
+                }
+
+                for (int index = 0; index < numCl; index++)
+                {
+                    var clusterInfo = clusterInfos[index];
+                    foreach (var info in clusterInfo)
+                    {
+                        var item = new TreeViewItem();
+                        item.Header = string.Format("{0}% : {1} / {2} : {3} - {4}", (double)info.Value / entNum[index], info.Value, entNum[index], info.Key.Predicate, info.Key.Subject);
+                        clusters[index].Items.Add(item);
+                    }
                 }
 
                 for (int i = 0; i < numCl; i++)
@@ -323,14 +396,18 @@ namespace QuerySettingApplication
         private void DrawProcess(DrawModEnum mode)
         {
             PrepareJsonData(mode);
-            var firefoxPath = "\"c:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe\" ";
+
+            var path = "\"" + Path + "\"";
             try
             {
-                System.Diagnostics.Process.Start(firefoxPath + Path);
+                var info = new ProcessStartInfo(@"C:\Program Files (x86)\Mozilla Firefox\firefox.exe", path);
+                Process.Start(info);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                System.Diagnostics.Process.Start(Path);
+                Console.WriteLine(path);
+                Console.WriteLine(ex.Message);
+                Process.Start(Path);
             }
         }
 

@@ -46,6 +46,52 @@ namespace QuerySettingApplication
             var otherVertex = obj as Vertex;
             return otherVertex != null && otherVertex.Id == Id;
         }
+
+        [JsonProperty]
+        [XmlElement("Infos")]
+        public List<RdfInfo> Infos { get; set; }
+    }
+
+    [JsonObject]
+    [Serializable]
+    public class RdfInfo
+    {
+        protected bool Equals(RdfInfo other)
+        {
+            return string.Equals(Predicate, other.Predicate) && string.Equals(Subject, other.Subject);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Predicate != null ? Predicate.GetHashCode() : 0)*397) ^ (Subject != null ? Subject.GetHashCode() : 0);
+            }
+        }
+
+        public RdfInfo()
+        { }
+
+        public RdfInfo(string p, string s)
+        {
+            Predicate = p;
+            Subject = s;
+        }
+
+        [JsonProperty]
+        [XmlElement("Predicate")]
+        public string Predicate { get; set; }
+        [JsonProperty]
+        [XmlElement("Subject")]
+        public string Subject { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((RdfInfo) obj);
+        }
     }
 
     [JsonObject]

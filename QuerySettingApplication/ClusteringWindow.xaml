@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        Title="Clustering window" Name="ClWin" Height="478" Width="695" Icon="Resource/rdf-128.png"
+        Title="Clustering window" Name="ClWin" Height="480" Width="1220" Icon="Resource/rdf-128.png"
         DataContext="{Binding RelativeSource={RelativeSource Self}}" ResizeMode="NoResize">
     <Grid>
         <GroupBox Header="Команды" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="10,57,0,0">
@@ -13,8 +13,8 @@
                 <GroupBox Header="Огрубление" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,40,0,0">
                     <Grid>
                         <Button Content="SSG" Name="SSG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="SSG_OnClick"/>
-                        <Button Content="MSG" Name="MSG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" IsEnabled="False"/>
-                        <TextBox HorizontalAlignment="Left" Height="25" Margin="95,40,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="79"/>
+                        <Button Content="MSG" Name="MSG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" Click="MSG_OnClick"/>
+                        <TextBox Name="MergeFactor" HorizontalAlignment="Left" Height="25" Margin="95,40,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="79"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Уточнение" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,128,0,0">
@@ -30,8 +30,10 @@
         <TextBlock HorizontalAlignment="Left" Height="25" Margin="214,11,0,0" TextWrapping="Wrap" Text="Значение модулярности для текущей кластеризации:" VerticalAlignment="Top" Width="Auto"/>
         <TextBlock HorizontalAlignment="Left" Name="ModularityValue" Height="25" Margin="513,11,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="Auto" 
                    Text="{Binding Path=ModularityText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-        <TreeView Name="ClusterTree" HorizontalAlignment="Left" Height="403" Margin="214,35,0,0" VerticalAlignment="Top" Width="463" 
+        <TreeView Name="ClusterTree" HorizontalAlignment="Left" Height="403" Margin="214,35,0,0" VerticalAlignment="Top" Width="360" 
                   ItemsSource="{Binding Path=TreeItems,  UpdateSourceTrigger=PropertyChanged}"  MouseDoubleClick="ClusterTree_OnMouseDoubleClick"/>
+        <TreeView Name="InfoTree" HorizontalAlignment="Left" Height="403" Margin="579,35,0,0" VerticalAlignment="Top" Width="604" 
+                  ItemsSource="{Binding Path=InfoItems,  UpdateSourceTrigger=PropertyChanged}"/>
         <TextBlock HorizontalAlignment="Left" Height="25" Margin="10,301,0,0" TextWrapping="Wrap" Text="Нарисовать:" VerticalAlignment="Top" Width="Auto"/>
         <Button Content="Круговой" HorizontalAlignment="Left" Height="25" Margin="10,386,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRound_OnClick"/>
         <Button Content="Со случайным расположением" HorizontalAlignment="Left" Height="25" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRandom_OnClick"/>
