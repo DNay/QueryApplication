@@ -31,6 +31,7 @@ namespace QuerySettingApplication
             ServiceSingletons.ClusterWindow = this;
             _clustService.SetGraph(graph);
             RaisePropertyChanged("TreeItems");
+            RaisePropertyChanged("InfoItems");
             SetModularity(_clustService.WeightOfClustering());
         }
 
@@ -58,6 +59,7 @@ namespace QuerySettingApplication
                 vertex.Cluster = _clustService.GetContainigCluster(vertex.Id);
             }
             RaisePropertyChanged("TreeItems");
+            RaisePropertyChanged("InfoItems");
         }
 
         public void SetModularity(double currM)
@@ -145,6 +147,14 @@ namespace QuerySettingApplication
             }
         }
 
+        internal class ComparerInfo : IComparer<KeyValuePair<RdfInfo, int>>
+        {
+            public int Compare(KeyValuePair<RdfInfo, int> x, KeyValuePair<RdfInfo, int> y)
+            {
+                return (-1) * x.Value.CompareTo(y.Value);
+            }
+        }
+
         public ObservableCollection<TreeViewItem> InfoItems
         {
             get
@@ -178,14 +188,23 @@ namespace QuerySettingApplication
                         clusterInfos[cl][info]++;
                     }
                 }
+                var sortedClusterInfos = new List<KeyValuePair<RdfInfo, int>>[numCl];
+
+                for (int index = 0; index < clusterInfos.Length; index++)
+                {
+                    var clusterInfo = clusterInfos[index].ToList();
+                    clusterInfo.Sort(new ComparerInfo());
+
+                    sortedClusterInfos[index] = clusterInfo;
+                }
 
                 for (int index = 0; index < numCl; index++)
                 {
-                    var clusterInfo = clusterInfos[index];
+                    var clusterInfo = sortedClusterInfos[index];
                     foreach (var info in clusterInfo)
                     {
                         var item = new TreeViewItem();
-                        item.Header = string.Format("{0}% : {1} / {2} : {3} - {4}", (double)info.Value / entNum[index], info.Value, entNum[index], info.Key.Predicate, info.Key.Subject);
+                        item.Header = string.Format("{0}% : {1} / {2} : {3} - {4}", (100.0 * info.Value / entNum[index]).ToString("0.00"), info.Value, entNum[index], info.Key.Predicate, info.Key.Subject);
                         clusters[index].Items.Add(item);
                     }
                 }
@@ -224,6 +243,7 @@ namespace QuerySettingApplication
 
             SetModularity(_clustService.WeightOfClustering());
             RaisePropertyChanged("TreeItems");
+            RaisePropertyChanged("InfoItems");
         }
 
         private void ClusterizeAuthorsByCiteNet(AuthorsGraph authorsGraph, CiteNet citeNet)
