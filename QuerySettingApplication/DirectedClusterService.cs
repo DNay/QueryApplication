@@ -207,6 +207,11 @@ namespace QuerySettingApplication
             return _modilarity;
         }
 
+        public void MSG(double mergeFactor)
+        {
+            throw new NotImplementedException();
+        }
+
         internal void RecalcWeightOfClustering()
         {
             double result = 0;
@@ -368,5 +373,6 @@ namespace QuerySettingApplication
         void Renumber();
 
         double WeightOfClustering();
+        void MSG(double mergeFactor);
     }
 }

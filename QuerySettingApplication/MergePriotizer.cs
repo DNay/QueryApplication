@@ -61,6 +61,18 @@ namespace QuerySettingApplication
             return conf.Weigth;
         }
 
+        internal List<KeyValuePair<int, int>> GetTopPrioritizedPairs(int l)
+        {
+            var result = new List<KeyValuePair<int, int>>();
+
+            for (int i = 0; i < _pairs.Count && i < l; i++)
+            {
+                result.Add(new KeyValuePair<int, int>(_pairs[i].C, _pairs[i].D));
+            }
+
+            return result;
+        }
+
         internal void OnMerge(int C, int D, IClusterService service)
         {
             _pairs.RemoveAll(t => t.D == D || t.D == C || t.C == C || t.C == D);
@@ -106,6 +118,11 @@ namespace QuerySettingApplication
             }
 
             //_pairs.Sort();
+        }
+
+        public int NumPozitivePairs()
+        {
+            return _pairs.Count;
         }
     }
 }
