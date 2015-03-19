@@ -165,6 +165,9 @@ namespace QuerySettingApplication
                 if (_graph.Vertexes.Count == 0)
                     return res;
 
+                if (_graph.Vertexes.Any(t => t.Infos == null))
+                    return res;
+
                 var numCl = _graph.Vertexes.Select(t => t.Cluster).Max() + 1;
 
                 var clusters = new TreeViewItem[numCl];
