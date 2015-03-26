@@ -29,8 +29,8 @@
                     <GroupBox Header="Уточнение" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,128,0,0">
                         <Grid>
                             <Button Content="CG" Name="RefCG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="RefCG_OnClick"/>
-                            <Button Content="FG" Name="RefFG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="95,10,0,0" IsEnabled="False"/>
-                            <Button Content="AKL" Name="RefAKL" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" IsEnabled="False"/>
+                            <Button Content="FG" Name="RefFG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="95,10,0,0" Click="RefFG_OnClick"/>
+                            <Button Content="AKL" Name="RefAKL" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" Click="RefAKL_OnClick"/>
                             <Button Content="MLR" Name="RefMLR" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="95,40,0,0" IsEnabled="False"/>
                         </Grid>
                     </GroupBox>

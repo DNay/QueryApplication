@@ -101,6 +101,24 @@ namespace QuerySettingApplication
             });
         }
 
+        private void RefFG_OnClick(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                _clustService.FG();
+                UpdateGroupsGraph();
+            });
+        }
+
+        private void RefAKL_OnClick(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                _clustService.AKL();
+                UpdateGroupsGraph();
+            });
+        }
+
         private string modularityText = "0";
         public string ModularityText
         {

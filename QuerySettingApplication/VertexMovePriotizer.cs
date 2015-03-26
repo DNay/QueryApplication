@@ -8,7 +8,7 @@ namespace QuerySettingApplication
 {
     internal class VertexMovePriotizer<T> where T : Vertex, new()// : IPriotizer
     {
-        class WeigthedPair : IComparable
+        internal class WeigthedPair : IComparable
         {
             public int V;
             public int D;
@@ -31,6 +31,12 @@ namespace QuerySettingApplication
         private List<int> _deadVertexes= new List<int>(); 
         private int numV;
         private int numC;
+
+        public List<WeigthedPair> Pairs
+        {
+            get { return _pairs; }
+        }
+
         //private bool _inited = false;
         internal void Initialize(IClusterService service)
         {
@@ -66,6 +72,31 @@ namespace QuerySettingApplication
             V = conf.V;
             D = conf.D;
             return conf.Weigth;
+        }
+
+        internal double GetPrioritizedPair(bool[] moved, out int V, out int D)
+        {
+            V = 0;
+            D = 0;
+
+            var conf = _pairs.FirstOrDefault(t => !moved[t.V]);
+            if (conf == null)
+                return -1;
+
+            V = conf.V;
+            D = conf.D;
+            return conf.Weigth;
+        }
+
+        public double GetBestCluster(int v, out int c)
+        {
+            c = 0;
+            var p = _pairs.FirstOrDefault(t => t.V == v);
+            if (p == null)
+                return -1;
+
+            c = p.D;
+            return p.Weigth;
         }
 
         internal void OnMove(int V, int C, int D, IClusterService service)

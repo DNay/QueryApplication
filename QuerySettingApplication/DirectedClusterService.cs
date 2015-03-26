@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
-using Gecko;
-using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
 
 namespace QuerySettingApplication
 {
@@ -209,7 +204,91 @@ namespace QuerySettingApplication
 
         public void MSG(double mergeFactor)
         {
-            throw new NotImplementedException();
+            _mergePriotizer.Initialize(this);
+            do
+            {
+                var l = mergeFactor * _mergePriotizer.NumPozitivePairs();
+                if (l == 0)
+                    break;
+
+                var pairs = _mergePriotizer.GetTopPrioritizedPairs((int)Math.Ceiling(l));
+                var merged = new bool[_numV]; // all false => unmerged
+
+                foreach (var pair in pairs)
+                {
+                    var c = pair.Key;
+                    var d = pair.Value;
+                    if (!merged[c] && !merged[d])
+                    {
+                        Merge(c, d);
+                        merged[c] = merged[d] = true;
+                        ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
+                    }
+                }
+
+
+            } while (true);
+
+            Renumber();
+        }
+
+        public void FG()
+        {
+            _vertexMovePriotizer.Initialize(this);
+
+            double deltaMax = 0;
+            double oldMod = _modilarity;
+            do
+            {
+                for (int i = 0; i < _numV; i++)
+                {
+                    int D;
+                    deltaMax = _vertexMovePriotizer.GetBestCluster(i, out D);
+
+                    if (D != -1)
+                    {
+                        Move(i, D);
+                        var delta = _modilarity - oldMod;
+                        oldMod = _modilarity;
+                        ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
+                    }
+                }
+
+            } while (_vertexMovePriotizer.Pairs.Any());
+
+            Renumber();
+        }
+
+        public void AKL()
+        {
+            _vertexMovePriotizer.Initialize(this);
+
+            double deltaMax = 0;
+            double oldMod = _modilarity;
+            double k = 10 * Math.Log(_numV, 2);
+            do
+            {
+                var moved = new bool[_numV];
+
+                for (int i = 0; i < k; i++)
+                {
+                    int V;
+                    int D;
+
+                    deltaMax = _vertexMovePriotizer.GetPrioritizedPair(moved, out V, out D);
+
+                    if (deltaMax > 0)
+                    {
+                        Move(i, D);
+                        var delta = _modilarity - oldMod;
+                        oldMod = _modilarity;
+                        ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
+                    }
+                }
+
+            } while (_vertexMovePriotizer.Pairs.Any());
+
+            Renumber();
         }
 
         internal void RecalcWeightOfClustering()
@@ -374,5 +453,7 @@ namespace QuerySettingApplication
 
         double WeightOfClustering();
         void MSG(double mergeFactor);
+        void FG();
+        void AKL();
     }
 }

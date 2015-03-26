@@ -10,8 +10,8 @@ namespace QuerySettingApplication
     {
         public App ()
         {
-            if (Directory.Exists("xulrunner//"))
-                Gecko.Xpcom.Initialize("xulrunner//");
+            //if (Directory.Exists("xulrunner//"))
+            //    Gecko.Xpcom.Initialize("xulrunner//");
         }
     }
 }

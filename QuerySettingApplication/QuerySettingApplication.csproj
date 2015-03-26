@@ -94,12 +94,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="BrowserWindow.cs">
+    <None Include="BrowserWindow.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="BrowserWindow.Designer.cs">
+    </None>
+    <None Include="BrowserWindow.Designer.cs">
       <DependentUpon>BrowserWindow.cs</DependentUpon>
-    </Compile>
+    </None>
     <Compile Include="ClusteringWindow.xaml.cs">
       <DependentUpon>ClusteringWindow.xaml</DependentUpon>
     </Compile>
