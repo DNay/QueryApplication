@@ -181,10 +181,21 @@ namespace QuerySettingApplication
             var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet, ServiceSingletons.ClusterService);
             clusterWindow.Show();
         }
+        private void ClusterPageRank_Click(object sender, RoutedEventArgs e)
+        {
+            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet, ServiceSingletons.PageRankClusterService);
+            clusterWindow.Show();
+        }
 
         private void ClusterAuth_Click(object sender, RoutedEventArgs e)
         {
             var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors, ServiceSingletons.ClusterAuthService);
+            clusterWindow.Show();
+        }
+
+        private void ClusterAuthPageRank_Click(object sender, RoutedEventArgs e)
+        {
+            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors, ServiceSingletons.PageRankClusterAuthService);
             clusterWindow.Show();
         }
 

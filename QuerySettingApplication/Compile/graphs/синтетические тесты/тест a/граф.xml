@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<CiteNet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <NumVertexes>16</NumVertexes>
+  <Vertexes xsi:type="VertexPublication">
+    <Id>0</Id>
+    <Cluster>0</Cluster>
+    <Name>0</Name>
+    <X>0</X>
+    <Y>0</Y>
+  </Vertexes>
+  <Vertexes xsi:type="VertexPublication">
+    <Id>1</Id>
+    <Cluster>0</Cluster>
+    <Name>1</Name>
+    <X>0</X>
+    <Y>0</Y>
+  </Vertexes>
+  <Vertexes xsi:type="VertexPublication">
+    <Id>2</Id>
+    <Cluster>0</Cluster>
+    <Name>2</Name>
+    <X>0</X>
+    <Y>0</Y>
+    <degreeIn>0</degreeIn>
+  </Vertexes>
+  <Vertexes xsi:type="VertexPublication">
+    <Id>3</Id>
+    <Cluster>0</Cluster>
+    <Name>3</Name>
+    <X>0</X>
+    <Y>0</Y>
+    <degreeIn>0</degreeIn>
+  </Vertexes>
+
+  <Edges>
+    <target>1</target>
+    <source>0</source>
+    <fictX>0</fictX>
+    <fictY>0</fictY>
+  </Edges>
+  <Edges>
+    <target>3</target>
+    <source>0</source>
+    <fictX>0</fictX>
+    <fictY>0</fictY>
+  </Edges>
+  <Edges>
+    <target>1</target>
+    <source>2</source>
+    <fictX>0</fictX>
+    <fictY>0</fictY>
+  </Edges>
+  <Edges>
+    <target>3</target>
+    <source>2</source>
+    <fictX>0</fictX>
+    <fictY>0</fictY>
+  </Edges>
+</CiteNet>

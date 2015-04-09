@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MathNet.Numerics.LinearAlgebra;
+using QuerySettingApplication.Annotations;
 
 namespace QuerySettingApplication
 {
@@ -26,6 +28,8 @@ namespace QuerySettingApplication
         private Matrix<double> P;
         private Vector<double> pi;
 
+        private string _logPath = "pr.log";
+
         public void SetGraph(IGraph graph)
         {
             SetGraph(graph as Graph<T>);
@@ -33,6 +37,11 @@ namespace QuerySettingApplication
 
         public void SetGraph(Graph<T> graph)
         {
+            if (File.Exists(_logPath))
+                File.Delete(_logPath);
+            using (var f = File.Create(_logPath))
+            { }
+
             _numV = graph.NumVertexes;
             _numE = graph.Edges.Count;
             _inDegree = new double[_numV];
@@ -346,7 +355,11 @@ namespace QuerySettingApplication
             }
 
             _modilarity = result;
-            Console.WriteLine(_modilarity);
+
+            using (var s = File.AppendText(_logPath))
+            {
+                s.WriteLine(_modilarity);
+            }
         }
 
         public double DeltaWeightOfMerge(int C, int D)

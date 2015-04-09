@@ -14,12 +14,14 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Button Grid.Row="0" Grid.Column="0" Content="Сохранить в файл" HorizontalAlignment="Left" Height="25" Width="112" Click="Save_Click" Margin="117,0,0,0"/>
                 <Button Grid.Row="0" Grid.Column="0" Content="Загрузить из файла" HorizontalAlignment="Left" Height="25" Width="112" Click="Load_Click"/>
 
-                <Button Grid.Row="3" Grid.Column="0" Content="Кластеризация и отрисовка" Name="ClusterButton" Height="Auto" HorizontalAlignment="Left" Click="Cluster_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
+                <Button Grid.Row="3" Grid.Column="0" Margin="2" Content="Кластеризация и отрисовка [Common]" Name="ClusterButton" Height="Auto" HorizontalAlignment="Left" Click="Cluster_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
+                <Button Grid.Row="4" Grid.Column="0" Margin="2" Content="Кластеризация и отрисовка [PageRank]" Name="ClusterButtonPageRank" Height="Auto" HorizontalAlignment="Left" Click="ClusterPageRank_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
 
                 <GroupBox Grid.Row="2" Grid.Column="0" Header="Граф" Height="Auto" Width="Auto">
                     <Grid>
@@ -81,6 +83,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
@@ -97,7 +100,8 @@
                 <Button Grid.Row="0" Grid.Column="1" Content="Сохранить в файл" HorizontalAlignment="Left" Height="25" Width="112" Click="SaveAuth_Click" Margin="2" />
                 <Button Grid.Row="0" Grid.Column="0" Content="Загрузить из файла" HorizontalAlignment="Left" Height="25" Width="112" Click="LoadAuth_Click" Margin="2"/>
 
-                <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Content="Кластеризация и отрисовка" Name="ClusterButtonAuth" Height="Auto" HorizontalAlignment="Left" Click="ClusterAuth_Click" IsEnabled="{Binding Path=IsClusteringAuthEnabled}"/>
+                <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Content="Кластеризация и отрисовка [Common]" Name="ClusterButtonAuth" Height="Auto" HorizontalAlignment="Left" Click="ClusterAuth_Click" IsEnabled="{Binding Path=IsClusteringAuthEnabled}"/>
+                <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Content="Кластеризация и отрисовка [PageRank]" Name="ClusterButtonAuthPageRank" Height="Auto" HorizontalAlignment="Left" Click="ClusterAuthPageRank_Click" IsEnabled="{Binding Path=IsClusteringAuthEnabled}"/>
 
                 <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Header="Граф" Height="Auto" Width="Auto">
                     <Grid>

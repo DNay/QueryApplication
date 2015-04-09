@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace QuerySettingApplication
@@ -22,6 +23,8 @@ namespace QuerySettingApplication
         private int[,] _matr;
         private int[] _cluster;
 
+        private string _logPath = "cmn.log";
+
         public void SetGraph(IGraph graph)
         {
             SetGraph(graph as Graph<T>);
@@ -29,6 +32,11 @@ namespace QuerySettingApplication
 
         public void SetGraph(Graph<T> graph)
         {
+            if (File.Exists(_logPath))
+                File.Delete(_logPath);
+            using (var f = File.Create(_logPath))
+            { }
+
             _numV = graph.NumVertexes;
             _numE = graph.Edges.Count;
             _inDegree = new double[_numV];
@@ -245,7 +253,7 @@ namespace QuerySettingApplication
                     int D;
                     deltaMax = _vertexMovePriotizer.GetBestCluster(i, out D);
 
-                    if (D != -1)
+                    if (deltaMax > 0)
                     {
                         Move(i, D);
                         var delta = _modilarity - oldMod;
@@ -276,10 +284,10 @@ namespace QuerySettingApplication
                     int D;
 
                     deltaMax = _vertexMovePriotizer.GetPrioritizedPair(moved, out V, out D);
-
+                    moved[V] = true;
                     if (deltaMax > 0)
                     {
-                        Move(i, D);
+                        Move(V, D);
                         var delta = _modilarity - oldMod;
                         oldMod = _modilarity;
                         ServiceSingletons.ClusterWindow.SetModularity(_modilarity);
@@ -303,7 +311,11 @@ namespace QuerySettingApplication
             }
 
             _modilarity = result / EdgeCount();
-            Console.WriteLine(_modilarity);
+
+            using (var s = File.AppendText(_logPath))
+            {
+                s.WriteLine(_modilarity);
+            }
         }
 
         public double DeltaWeightOfMerge(int C, int D)
