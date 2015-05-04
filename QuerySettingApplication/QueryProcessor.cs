@@ -115,12 +115,15 @@ namespace QuerySettingApplication
         {
             foreach (VertexPublication vert in CiteNet.Vertexes)
             {
-                _authors.Add(vert.Name, vert.Authors);
+                if (!_authors.ContainsKey(vert.Name))
+                    _authors.Add(vert.Name, vert.Authors);
 
-                foreach (var auth in vert.Authors)
-                {
-                    _graphAuthors.AddVertex(auth);
-                }
+                if (vert.Authors != null)
+                    foreach (var auth in vert.Authors)
+                    {
+                        if (GraphAuthors.Vertexes.All(t => t.Name != auth))
+                            GraphAuthors.AddVertex(auth);
+                    }
 
                 ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
             }
@@ -144,6 +147,11 @@ namespace QuerySettingApplication
                         GraphAuthors.AddEdge(newEdge);
                     }
                 }
+            }
+
+            foreach (var v in GraphAuthors.Vertexes)
+            {
+                v.Infos = ProcessAuthorInfoQuery(v.Name);
             }
 
             ServiceSingletons.MainWindow.NumEdgesAuthProp = GraphAuthors.Edges.Count.ToString();
@@ -180,6 +188,14 @@ namespace QuerySettingApplication
             } 
         }
 
+        private List<RdfInfo> ProcessAuthorInfoQuery(string currentEntity)
+        {
+            var reqFile = GenerateRequest(_queryFileInfo, GetService(currentEntity), currentEntity, string.Empty);
+
+            var jsonResult = ProcessAnyQuery<JSONResultInfo>(reqFile);
+            return jsonResult.Results.Bindings.Select(t => new RdfInfo(t.P.Value, t.S.Value)).Distinct().ToList();
+        }
+
         private void ProcessInfoQuery(string currentEntity)
         {
             var reqFile = GenerateRequest(_queryFileInfo, GetService(currentEntity), currentEntity, string.Empty);
@@ -188,13 +204,13 @@ namespace QuerySettingApplication
             var infos = jsonResult.Results.Bindings.Select(t => new RdfInfo(t.P.Value, t.S.Value)).Distinct().ToList();
 
             var authors = infos.Where(t => t.Predicate.Contains("has-author")).Select(t => t.Subject).Distinct().ToList();
-            var dates = infos.Where(t => t.Predicate.Contains("has-date")).Select(t => 
-                                                                        {
-                                                                            var text = t.Subject;
-                                                                            text = text.Replace("http://www.aktors.org/ontology/date#",
-                                                                                string.Empty);
-                                                                            return DateTime.Parse(text);
-                                                                        })
+            var dates = infos.Where(t => t.Predicate.Contains("has-date")).Select(t =>
+            {
+                var text = t.Subject;
+                text = text.Replace("http://www.aktors.org/ontology/date#",
+                    string.Empty);
+                return DateTime.Parse(text);
+            })
                                                                         .Distinct().ToList();
 
             var curVert = CiteNet.GetVertex(currentEntity);

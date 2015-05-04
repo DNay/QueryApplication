@@ -35,21 +35,54 @@ namespace QuerySettingApplication
             SetModularity(_clustService.WeightOfClustering());
         }
 
-        private void InitializeButton_OnClick(object sender, RoutedEventArgs e)
+        private void Cluster_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (_isProcessed)
+                return;
+            _isProcessed = true;
+            //init
+            _clustService.Initialize(_graph, 1);
+            UpdateGroupsGraph();
+            SetModularity(_clustService.WeightOfClustering());
+
+            int gMode = SSGMode.IsChecked.HasValue && SSGMode.IsChecked.Value ? 0 : 1;
+            int refMode = CGMode.IsChecked.HasValue && CGMode.IsChecked.Value ? 0 : FGMode.IsChecked.HasValue && FGMode.IsChecked.Value ? 1 : 2;
+            var text = MergeFactor.Text;
+
+            Task.Factory.StartNew(() => ClusterProcess(gMode, refMode, text));
+        }
+
+        private void ClusterProcess(int gMode, int refMode, string mf)
+        {
+            switch (gMode)
             {
-                var num = int.Parse(NumInOneClusterText.Text);
-                if (num < 1)
-                    return;
-                _clustService.Initialize(_graph, num);
-                UpdateGroupsGraph();
-                SSG.IsEnabled = true;
-                SetModularity(_clustService.WeightOfClustering());
+                case 0:
+                    _clustService.SSG();
+                    break;
+                default:
+                    {
+                        float factor;
+                        if (float.TryParse(mf, out factor))
+                            _clustService.MSG(factor);
+                    }
+                    break;
             }
-            catch (Exception ex)
+
+            UpdateGroupsGraph();
+
+            switch (refMode)
             {
+                case 0:
+                    _clustService.CG();
+                    break;
+                case 1:
+                    _clustService.FG();
+                    break;
+                default:
+                    _clustService.AKL();
+                    break;
             }
+            UpdateGroupsGraph();
         }
 
         private void UpdateGroupsGraph()
@@ -67,58 +100,6 @@ namespace QuerySettingApplication
             ModularityText = currM.ToString();
         }
 
-        private void SSG_OnClick(object sender, RoutedEventArgs e)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                _clustService.SSG();
-                UpdateGroupsGraph();
-            });
-            RefCG.IsEnabled = true;
-        }
-
-        private void MSG_OnClick(object sender, RoutedEventArgs e)
-        {
-            var text = MergeFactor.Text;
-            Task.Factory.StartNew(() =>
-            {
-                double factor;
-                if (double.TryParse(text, out factor))
-                {
-                    _clustService.MSG(factor);
-                    UpdateGroupsGraph();
-                }
-            });
-            RefCG.IsEnabled = true;
-        }
-
-        private void RefCG_OnClick(object sender, RoutedEventArgs e)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                _clustService.CG();
-                UpdateGroupsGraph();
-            });
-        }
-
-        private void RefFG_OnClick(object sender, RoutedEventArgs e)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                _clustService.FG();
-                UpdateGroupsGraph();
-            });
-        }
-
-        private void RefAKL_OnClick(object sender, RoutedEventArgs e)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                _clustService.AKL();
-                UpdateGroupsGraph();
-            });
-        }
-
         private string modularityText = "0";
         public string ModularityText
         {
@@ -127,6 +108,19 @@ namespace QuerySettingApplication
             {
                 modularityText = value;
                 RaisePropertyChanged("ModularityText");
+            }
+        }
+
+        private string squareErrorText = "0";
+        private bool _isProcessed;
+
+        public string SquareErrorText
+        {
+            get { return squareErrorText; }
+            set
+            {
+                squareErrorText = value;
+                RaisePropertyChanged("SquareErrorText");
             }
         }
 
@@ -149,9 +143,9 @@ namespace QuerySettingApplication
 
                 foreach (var vertex in _graph.Vertexes)
                 {
-                     var item = new TreeViewItem();
-                     item.Header = vertex.Name;
-                     clusters[vertex.Cluster].Items.Add(item);
+                    var item = new TreeViewItem();
+                    item.Header = vertex.Name;
+                    clusters[vertex.Cluster].Items.Add(item);
                 }
 
                 for (int i = 0; i < numCl; i++)
@@ -197,11 +191,15 @@ namespace QuerySettingApplication
                 for (int index = 0; index < numCl; index++)
                     clusterInfos[index] = new Dictionary<RdfInfo, int>();
                 var entNum = new int[numCl];
+                var entNumWithInfo = new int[numCl];
 
                 foreach (var vertex in _graph.Vertexes)
                 {
                     var cl = vertex.Cluster;
                     entNum[cl]++;
+                    if (vertex.Infos.Any())
+                        entNumWithInfo[cl]++;
+
                     foreach (var info in vertex.Infos)
                     {
                         if (!clusterInfos[cl].ContainsKey(info))
@@ -209,6 +207,32 @@ namespace QuerySettingApplication
                         clusterInfos[cl][info]++;
                     }
                 }
+
+                var errors = new double[numCl];
+
+                foreach (var vertex in _graph.Vertexes)
+                {
+                    if (!vertex.Infos.Any())
+                        continue;
+
+                    var error = 0.0;
+                    var cl = vertex.Cluster;
+
+                    foreach (var info in clusterInfos[cl])
+                    {
+                        var p = (double)info.Value / entNumWithInfo[cl];
+
+                        if (vertex.Infos.Contains(info.Key))
+                            error += Math.Pow(1 - p, 2);
+                        else
+                            error += Math.Pow(p, 2);
+                    }
+
+                    errors[cl] += error;
+                }
+
+                SquareErrorText = errors.Sum().ToString();
+
                 var sortedClusterInfos = new List<KeyValuePair<RdfInfo, int>>[numCl];
 
                 for (int index = 0; index < clusterInfos.Length; index++)
@@ -232,7 +256,7 @@ namespace QuerySettingApplication
 
                 for (int i = 0; i < numCl; i++)
                 {
-                    clusters[i].Header = "Cluster " + i + " (" + clusters[i].Items.Count + " items)";
+                    clusters[i].Header = string.Format("Cluster {0} ({1} items), SqError = {2}", i, clusters[i].Items.Count, errors[i].ToString("0.000"));
 
                     res.Add(clusters[i]);
                 }
@@ -385,9 +409,9 @@ namespace QuerySettingApplication
                     PositingPointsComponentTime(_graph);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("mode");
+                    break;
             }
-            
+
             CalculateDegree(_graph);
             var strJ = JsonConvert.SerializeObject(_graph);
             var fileStreamJ = File.CreateText("page//graph2.json");
@@ -406,6 +430,11 @@ namespace QuerySettingApplication
         private string Path
         {
             get { return "file:///" + Directory.GetCurrentDirectory() + "\\page\\index.html"; }
+        }
+
+        private string WPath
+        {
+            get { return "file:///" + Directory.GetCurrentDirectory() + "\\page\\index3.html"; }
         }
 
         public object ClusteringWithAnotherEnabled
@@ -434,11 +463,19 @@ namespace QuerySettingApplication
             DrawProcess(DrawModEnum.ROUND);
         }
 
+        private void DrawInBrowserWeight_OnClick(object sender, RoutedEventArgs e)
+        {
+            DrawProcess(DrawModEnum.WEIGHT);
+        }
+
         private void DrawProcess(DrawModEnum mode)
         {
             PrepareJsonData(mode);
 
             var path = "\"" + Path + "\"";
+            if (mode == DrawModEnum.WEIGHT)
+                path = "\"" + WPath + "\"";
+
             try
             {
                 var info = new ProcessStartInfo(@"C:\Program Files (x86)\Mozilla Firefox\firefox.exe", path);
@@ -467,13 +504,13 @@ namespace QuerySettingApplication
                     clusters[vertex.Cluster]++;
             }
 
-            var phi = 2*Math.PI/clusters.Count;
-            var radMax = 40*Math.Log(clusters.Select(t => t.Value).Max(), 2);
-            var radius = 2 * radMax/Math.Sin(phi) + 50;
+            var phi = 2 * Math.PI / clusters.Count;
+            var radMax = 40 * Math.Log(clusters.Select(t => t.Value).Max(), 2);
+            var radius = 2 * radMax / Math.Sin(phi) + 50;
 
             foreach (var vertex in graph.Vertexes)
             {
-                var centerAngle = phi*vertex.Cluster;
+                var centerAngle = phi * vertex.Cluster;
                 var centerGroupX = radius * Math.Cos(centerAngle) + radMax + radius;
                 var centerGroupY = radius * Math.Sin(centerAngle) + radMax + radius;
 
@@ -496,7 +533,7 @@ namespace QuerySettingApplication
                 else
                 {
                     edge.fictX = 0 + radMax + radius;
-                    edge.fictY = 0 + radMax + radius;                
+                    edge.fictY = 0 + radMax + radius;
                 }
             }
         }
@@ -541,8 +578,8 @@ namespace QuerySettingApplication
             var xLen = (maxTime - minTime).TotalDays;
 
             foreach (VertexPublication vertex in graph.Vertexes)
-            {                   
-                vertex.X = vertex.Date < minTime ? 0.5*4000 : (vertex.Date - minTime).TotalDays/xLen*4000;
+            {
+                vertex.X = vertex.Date < minTime ? 0.5 * 4000 : (vertex.Date - minTime).TotalDays / xLen * 4000;
                 vertex.Y = clustersY[vertex.Cluster] + ran.NextDouble() * clustersHeight[vertex.Cluster];
                 clustersAdded[vertex.Cluster]++;
             }
@@ -597,7 +634,7 @@ namespace QuerySettingApplication
                 h += clustersHeight[cluster.Key];
                 clustersX[cluster.Key] = ran.NextDouble() * 4000;
             }
-            
+
             foreach (var vertex in graph.Vertexes)
             {
                 vertex.X = clustersX[vertex.Cluster] + ran.NextDouble() * clustersWidth[vertex.Cluster];
@@ -622,7 +659,7 @@ namespace QuerySettingApplication
 
         internal enum DrawModEnum
         {
-            ROUND, RANDOM, TIME
+            ROUND, RANDOM, TIME, WEIGHT
         }
     }
 }

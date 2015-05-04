@@ -29,7 +29,15 @@
 
     .link {
         cursor: move;
-        stroke-opacity: .6;
+        stroke: #555;
+        opacity: .6;
+    }
+
+
+    .marker {
+        cursor: move;
+        stroke: #f00;
+        opacity: 0.7;
     }
 
 </style>
@@ -40,8 +48,7 @@
             height = 1000,
             r = 5;
 
-    var color = d3.scale.category20();
-
+    var color = d3.scale.category10();
     var force = d3.layout.force()
             .size([width, height])
             .charge(-400)
@@ -63,8 +70,8 @@
             .attr("markerWidth", "20")
             .attr("markerHeight", "30")
             .append("polyline")
-            .attr("points", "-8,3 0,5 -8,7 -6,5")
-            .attr("fill", "darkblue");
+            .attr("points", "-10,3 0,5 -10,7 -8,5")
+            .attr("fill", "red");
 
     var drag = force.drag()
             .on("dragstart", dragstart);
@@ -72,6 +79,7 @@
     var link = svg.selectAll(".link"),
             node = svg.selectAll(".node");
 
+    var markers = svg.selectAll(".marker");
     var citeGrad = defs.append("linearGradient").attr("id", "citeGrad");
     citeGrad.append("stop")
             .attr("offset", "0%")
@@ -90,9 +98,16 @@
                 .data(graph.Edges)
                 .enter().append("line")
                 .attr("class", "link")
+                .style("stroke-width", function(d) { return 200 * d.weight; });
+                //.style("stroke", "url(#citeGrad)")
+                //.style("stroke-width", function(d) { return 200 * d.weight; });
+
+        markers = svg.selectAll(".marker")
+                .data(graph.Edges)
+                .enter().append("line")
+                .attr("class", "marker")
                 .attr("marker-end", "url(#myMarker)")
-                .style("stroke", "url(#citeGrad)")
-                .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+                .style("stroke-width", function(d) { return 0.6; });
 
         node = node.data(graph.Vertexes)
                 .enter().append("circle")
@@ -111,6 +126,11 @@
 
     function tick() {
         link.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+        markers.attr("x1", function(d) { return d.source.x; })
                 .attr("y1", function(d) { return d.source.y; })
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });

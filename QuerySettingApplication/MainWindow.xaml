@@ -1,125 +1,48 @@
 ﻿<Window x:Class="QuerySettingApplication.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Query setting window" Name="QueryMainWindow" DataContext="{Binding ElementName=QueryMainWindow}" SizeToContent="WidthAndHeight" ResizeMode="CanMinimize" Icon="Resource/rdf-128.png">
-    <TabControl Height="Auto" Width="Auto">
-        <TabItem Header="Сеть цитирования">
+        Title="Query setting window" Name="QueryMainWindow" DataContext="{Binding ElementName=QueryMainWindow}" SizeToContent="WidthAndHeight" MinHeight="270" MinWidth="400" ResizeMode="CanResize" Icon="Resource/rdf-128.png">
+
+    <Grid VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0">
+            <MenuItem Header="Загрузить">
+                <MenuItem Header="Открыть файл с графом" Click="Load_Click"></MenuItem>
+                <MenuItem Header="Извлечь сеть из репозитория" Click="LoadFromRep_Click"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Сохранить" Click="Save_Click"></MenuItem>
+        </Menu>
+        <GroupBox Margin="4" Grid.Row="1" Header="{Binding GraphDescription}" Height="Auto" Width="Auto" IsEnabled="{Binding IsVisibleGraphDescriptionPrp}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Button Grid.Row="0" Grid.Column="0" Content="Сохранить в файл" HorizontalAlignment="Left" Height="25" Width="112" Click="Save_Click" Margin="117,0,0,0"/>
-                <Button Grid.Row="0" Grid.Column="0" Content="Загрузить из файла" HorizontalAlignment="Left" Height="25" Width="112" Click="Load_Click"/>
-
-                <Button Grid.Row="3" Grid.Column="0" Margin="2" Content="Кластеризация и отрисовка [Common]" Name="ClusterButton" Height="Auto" HorizontalAlignment="Left" Click="Cluster_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
-                <Button Grid.Row="4" Grid.Column="0" Margin="2" Content="Кластеризация и отрисовка [PageRank]" Name="ClusterButtonPageRank" Height="Auto" HorizontalAlignment="Left" Click="ClusterPageRank_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
-
-                <GroupBox Grid.Row="2" Grid.Column="0" Header="Граф" Height="Auto" Width="Auto">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="№ вершин: " />
-                        <Label Grid.Row="0" Grid.Column="1" Name="NumVertexes" Content="{Binding Path=NumVertexesProp}" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="№ ребер: " />
-                        <Label Grid.Row="1" Grid.Column="1" Name="NumEdges" Content="{Binding Path=NumEdgesProp}" />
-                    </Grid>
-                </GroupBox>
-
-                <GroupBox Grid.Row="2" Grid.Column="1" Header="Server" Height="Auto" Width="Auto">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Label Grid.Row="0" Name="ServerStatus" Content="Fuseki server is OFF" HorizontalAlignment="Left" />
-                        <Button Grid.Row="1" Content="Start server" HorizontalAlignment="Left" Click="Fuseki_Button_Click" />
-                    </Grid>
-                </GroupBox>
-
-                <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Концигурация запроса" Height="Auto" Width="Auto">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="240" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBox Grid.Row="0" Grid.Column="1" Name="EntityTextBox" TextWrapping="NoWrap" Text="{Binding Path=CurrentEntityProp}" />
-                        <Label Grid.Row="0" Grid.Column="0" Content="Текущая сущность" HorizontalAlignment="Left"  VerticalAlignment="Top" Width="Auto"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" Name="MaxVertCount" TextWrapping="NoWrap" Text="{Binding Path=MaxVertCountProp}" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="Ограничение количества вершин" HorizontalAlignment="Left" Height="Auto" Width="Auto"/>
-                        <ProgressBar Grid.Row="2" Grid.Column="0" Visibility="Hidden" />
-                        <Button Grid.Row="2" Grid.Column="1" Content="Извлечь сеть" Name="StartProcess" HorizontalAlignment="Right" Click="Start_Button_Click" IsEnabled="True" Margin="0,2,0,0" />
-                    </Grid>
-                </GroupBox>
-            </Grid>
-        </TabItem>
-        <TabItem Header="Граф соавторов">
-            <Grid >
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-
-                <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    
-                    <Button Grid.Row="0" Content="Извлечь на основе сети цитирований" Height="25" Width="Auto" Click="Authors_Click" Margin="1,1,1,1"/>
-                    <!--<ProgressBar Grid.Row="1" Name="ProgressBarAuth" >
-                    </ProgressBar>-->
-                </Grid>
-
-                <Button Grid.Row="0" Grid.Column="1" Content="Сохранить в файл" HorizontalAlignment="Left" Height="25" Width="112" Click="SaveAuth_Click" Margin="2" />
-                <Button Grid.Row="0" Grid.Column="0" Content="Загрузить из файла" HorizontalAlignment="Left" Height="25" Width="112" Click="LoadAuth_Click" Margin="2"/>
-
-                <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Content="Кластеризация и отрисовка [Common]" Name="ClusterButtonAuth" Height="Auto" HorizontalAlignment="Left" Click="ClusterAuth_Click" IsEnabled="{Binding Path=IsClusteringAuthEnabled}"/>
-                <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Content="Кластеризация и отрисовка [PageRank]" Name="ClusterButtonAuthPageRank" Height="Auto" HorizontalAlignment="Left" Click="ClusterAuthPageRank_Click" IsEnabled="{Binding Path=IsClusteringAuthEnabled}"/>
-
-                <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Header="Граф" Height="Auto" Width="Auto">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="№ вершин: " />
-                        <Label Grid.Row="0" Grid.Column="1" Name="NumVertexesAuth" Content="{Binding Path=NumVertexesAuthProp}" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="№ ребер: " />
-                        <Label Grid.Row="1" Grid.Column="1" Name="NumEdgesAuth" Content="{Binding Path=NumEdgesAuthProp}" />
-                    </Grid>
-                </GroupBox>
+                <Label Grid.Row="0" Grid.Column="0" Content="Количество вершин:" />
+                <Label Grid.Row="0" Grid.Column="1" Name="NumVertexes" Content="{Binding Path=NumVertexesProp}" />
+                <Label Grid.Row="1" Grid.Column="0" Content="Количество ребер:" />
+                <Label Grid.Row="1" Grid.Column="1" Name="NumEdges" Content="{Binding Path=NumEdgesProp}" />
             </Grid>
-        </TabItem>
-    </TabControl>
+        </GroupBox>
+        <Grid Margin="4" Grid.Row="2" IsEnabled="{Binding IsVisibleGraphDescriptionPrp}" VerticalAlignment="Bottom">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Label Margin="4" Content="Режим модулярности:" />
+            <RadioButton Grid.Row="1" Content="Density / Плотность" GroupName="Mode" Name="DensityMode" Margin="4"/>
+            <RadioButton Grid.Row="2" Content="LinkRank / Случайное блуждание" GroupName="Mode"  Name="LinkRankMode" Margin="4" IsChecked="True"/>
+            <Button Grid.Row="3" VerticalAlignment="Bottom" Grid.Column="0" Margin="15" Width="200" Content="Кластеризация и отрисовка" Name="ClusterButton" Height="Auto" HorizontalAlignment="Stretch" Click="Cluster_Click" IsEnabled="{Binding Path=IsClusteringEnabled}"/>
+        </Grid>
+    </Grid>
 </Window>

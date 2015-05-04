@@ -12,7 +12,7 @@ namespace QuerySettingApplication
         {
             public int V;
             public int D;
-            public double Weigth;
+            public float Weigth;
 
             public int CompareTo(object obj)
             {
@@ -40,6 +40,7 @@ namespace QuerySettingApplication
         //private bool _inited = false;
         internal void Initialize(IClusterService service)
         {
+            _deadVertexes.Clear();
             numV = service.NumVertexes();
             numC = service.NumClusters();
 
@@ -60,7 +61,7 @@ namespace QuerySettingApplication
             //_inited = true;
         }
 
-        internal double GetPrioritizedPair(out int V, out int D)
+        internal float GetPrioritizedPair(out int V, out int D)
         {
             V = 0;
             D = 0;
@@ -74,7 +75,7 @@ namespace QuerySettingApplication
             return conf.Weigth;
         }
 
-        internal double GetPrioritizedPair(bool[] moved, out int V, out int D)
+        internal float GetPrioritizedPair(bool[] moved, out int V, out int D)
         {
             V = 0;
             D = 0;
@@ -88,7 +89,7 @@ namespace QuerySettingApplication
             return conf.Weigth;
         }
 
-        public double GetBestCluster(int v, out int c)
+        public float GetBestCluster(int v, out int c)
         {
             c = 0;
             var p = _pairs.FirstOrDefault(t => t.V == v);

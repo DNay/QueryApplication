@@ -140,6 +140,11 @@ namespace QuerySettingApplication
         public double fictX { get; set; }
         [JsonProperty]
         public double fictY { get; set; }
+
+        [JsonProperty]
+        public double weight { get; set; }
+
+
         public override bool Equals(object obj)
         {
             var otherEdge = obj as Edge;
@@ -177,12 +182,15 @@ namespace QuerySettingApplication
             return newVer;
         }
 
-        public Edge AddEdge(Edge edge)
+        public Edge AddEdge(Edge edge, bool isSearch = true)
         {
-            var cur = GetEdge(edge);
-            if (cur != null)
+            if (isSearch)
             {
-                return cur;
+                var cur = GetEdge(edge);
+                if (cur != null)
+                {
+                    return cur;
+                }
             }
 
             Edges.Add(edge);

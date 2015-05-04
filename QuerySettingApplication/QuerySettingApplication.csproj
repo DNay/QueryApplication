@@ -103,6 +103,9 @@
     <Compile Include="ClusteringWindow.xaml.cs">
       <DependentUpon>ClusteringWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="OnlineLoadWindow.xaml.cs">
+      <DependentUpon>OnlineLoadWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PageRankDirectedClusterService.cs" />
     <Compile Include="DirectedClusterService.cs" />
     <None Include="ClusterService.cs" />
@@ -130,6 +133,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="OnlineLoadWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

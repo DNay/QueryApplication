@@ -17,9 +17,9 @@ namespace QuerySettingApplication
 
         private int _numV;
         private int _numE;
-        private double _modilarity;
-        private double[] _inDegree;
-        private double[] _outDegree;
+        private float _modilarity;
+        private float[] _inDegree;
+        private float[] _outDegree;
         private int[,] _matr;
         private int[] _cluster;
 
@@ -27,6 +27,7 @@ namespace QuerySettingApplication
 
         public void SetGraph(IGraph graph)
         {
+            Graph = graph;
             SetGraph(graph as Graph<T>);
         }
 
@@ -39,8 +40,8 @@ namespace QuerySettingApplication
 
             _numV = graph.NumVertexes;
             _numE = graph.Edges.Count;
-            _inDegree = new double[_numV];
-            _outDegree = new double[_numV];
+            _inDegree = new float[_numV];
+            _outDegree = new float[_numV];
             _cluster = new int[_numV];
             _matr = new int[_numV, _numV];
 
@@ -56,6 +57,12 @@ namespace QuerySettingApplication
 
                 _matr[edge.source, edge.target] = 1;
             }
+
+            foreach (var edge in graph.Edges)
+            {
+                edge.weight = (_matr[edge.source, edge.target] - (_outDegree[edge.source] * _inDegree[edge.target]) / EdgeCount())/100;
+            }
+
             RecalcWeightOfClustering();
             ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
         }
@@ -197,12 +204,12 @@ namespace QuerySettingApplication
             return _numV;
         }
 
-        internal double EdgeCount()
+        internal float EdgeCount()
         {
             return _numE;
         }
 
-        public double WeightOfClustering()
+        public float WeightOfClustering()
         {
             if (_modilarity == 0)
                 RecalcWeightOfClustering();
@@ -210,7 +217,7 @@ namespace QuerySettingApplication
             return _modilarity;
         }
 
-        public void MSG(double mergeFactor)
+        public void MSG(float mergeFactor)
         {
             _mergePriotizer.Initialize(this);
             do
@@ -244,8 +251,8 @@ namespace QuerySettingApplication
         {
             _vertexMovePriotizer.Initialize(this);
 
-            double deltaMax = 0;
-            double oldMod = _modilarity;
+            float deltaMax = 0;
+            float oldMod = _modilarity;
             do
             {
                 for (int i = 0; i < _numV; i++)
@@ -271,9 +278,9 @@ namespace QuerySettingApplication
         {
             _vertexMovePriotizer.Initialize(this);
 
-            double deltaMax = 0;
-            double oldMod = _modilarity;
-            double k = 10 * Math.Log(_numV, 2);
+            float deltaMax = 0;
+            float oldMod = _modilarity;
+            float k = (float) (10 * Math.Log(_numV, 2));
             do
             {
                 var moved = new bool[_numV];
@@ -299,9 +306,11 @@ namespace QuerySettingApplication
             Renumber();
         }
 
+        public IGraph Graph { get; private set; }
+
         internal void RecalcWeightOfClustering()
         {
-            double result = 0;
+            float result = 0;
             for (int i = 0; i < _numV; i++)
             {
                 for (int j = 0; j < _numV; j++)
@@ -318,9 +327,9 @@ namespace QuerySettingApplication
             }
         }
 
-        public double DeltaWeightOfMerge(int C, int D)
+        public float DeltaWeightOfMerge(int C, int D)
         {
-            double result = 0;
+            float result = 0;
 
             var outs = new List<int>();
             var ins = new List<int>();
@@ -336,22 +345,24 @@ namespace QuerySettingApplication
                     ins.Add(i);
             }
 
+
+
             foreach (var i in ins)
             {
                 foreach (var j in outs)
                 {
-                    result += (_matr[i, j] - (_outDegree[i] * _inDegree[j]) / EdgeCount());
+                    result += (_matr[i, j] + _matr[j, i] - (_outDegree[i] * _inDegree[j] + _outDegree[j] * _inDegree[i]) / EdgeCount());
                 }
             }
 
             return result / EdgeCount();
         }
 
-        public double DeltaWeightOfMoving(int v, int D)
+        public float DeltaWeightOfMoving(int v, int D)
         {
             var C = _cluster[v];
 
-            double result = 0;
+            float result = 0;
 
             var vC = new List<int>();
             var vD = new List<int>();
@@ -364,12 +375,14 @@ namespace QuerySettingApplication
                 {
                     vC.Add(i);
                     fvC += _matr[i, v];
+                    fvC += _matr[v, i];
                     continue;
                 }
                 if (_cluster[i] == D)
                 {
                     vD.Add(i);
                     fvD += _matr[v, i];
+                    fvD += _matr[i, v];
                 }
             }
 
@@ -380,12 +393,12 @@ namespace QuerySettingApplication
                 case 0:
                     foreach (var i in vD)
                     {
-                        result -= (_outDegree[v] * _inDegree[i]) / EdgeCount();
+                        result -= (_outDegree[v] * _inDegree[i] + _outDegree[i] * _inDegree[v]) / EdgeCount();
                     }
 
                     foreach (var j in vC)
                     {
-                        result += (_outDegree[j] * _inDegree[v]) / EdgeCount();
+                        result += (_outDegree[j] * _inDegree[v] + _outDegree[v] * _inDegree[j]) / EdgeCount();
                     }
                     break;
                 case 1:
@@ -452,8 +465,8 @@ namespace QuerySettingApplication
     public interface IClusterService
     {
         int NumVertexes();
-        double DeltaWeightOfMerge(int cl1, int cl2);
-        double DeltaWeightOfMoving(int i, int cluster);
+        float DeltaWeightOfMerge(int cl1, int cl2);
+        float DeltaWeightOfMoving(int i, int cluster);
         void SetGraph(IGraph graph);
 
         void Initialize(IGraph graph, int num);
@@ -463,9 +476,11 @@ namespace QuerySettingApplication
         int NumClusters();
         void Renumber();
 
-        double WeightOfClustering();
-        void MSG(double mergeFactor);
+        float WeightOfClustering();
+        void MSG(float mergeFactor);
         void FG();
         void AKL();
+
+        IGraph Graph { get; }
     }
 }

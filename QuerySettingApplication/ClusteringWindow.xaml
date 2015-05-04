@@ -3,43 +3,72 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        Title="Clustering window" Name="ClWin" Height="480" Width="1220" MinWidth="800" Icon="Resource/rdf-128.png"
+        Title="Clustering window" Name="ClWin" Height="550" Width="1320" MinWidth="800" MinHeight="500" Icon="Resource/rdf-128.png"
         DataContext="{Binding RelativeSource={RelativeSource Self}}" SizeToContent="WidthAndHeight" ResizeMode="CanResize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid Column="0">
-            <Button  HorizontalAlignment="Left" Height="45" Margin="10,7,0,0" VerticalAlignment="Top" Width="199" Click="ClusterWithAnotherGraph_OnClick" IsEnabled="{Binding ClusteringWithAnotherEnabled}">
-                <TextBlock TextWrapping="WrapWithOverflow">Получить кластеризацию на основе другого графа</TextBlock>
-            </Button>
-            <GroupBox Header="Команды" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="10,57,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <GroupBox Header="Конфигурация схемы" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="4" Grid.Row="0">
                 <Grid>
-                    <Button Name="InitializeButton" Content="Initialize" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="InitializeButton_OnClick"/>
-                    <TextBox Name="NumInOneClusterText" HorizontalAlignment="Left" Height="25" Margin="95,10,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="79"/>
-                    <GroupBox Header="Огрубление" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,40,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <GroupBox Grid.Row="0" Header="Огрубление" HorizontalAlignment="Stretch" Height="Auto" VerticalAlignment="Center" Width="Auto" Margin="4">
                         <Grid>
-                            <Button Content="SSG" Name="SSG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="SSG_OnClick"/>
-                            <Button Content="MSG" Name="MSG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" Click="MSG_OnClick"/>
-                            <TextBox Name="MergeFactor" HorizontalAlignment="Left" Height="25" Margin="95,40,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="79"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <RadioButton Grid.Row="0" Grid.Column="0" Content="Single-step" GroupName="GreedyMode" Name="SSGMode" Margin="4" VerticalAlignment="Center" IsChecked="True"/>
+                            <RadioButton Grid.Row="1" Grid.Column="0"  Content="Multi-step" GroupName="GreedyMode" Name="MSGMode" Margin="4" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1"  Name="MergeFactor" HorizontalAlignment="Left" Height="25" Margin="4" TextWrapping="Wrap" Text="0,5" VerticalAlignment="Center" Width="70"/>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="Уточнение" HorizontalAlignment="Left" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="0,128,0,0">
+                    <GroupBox Grid.Row="1" Header="Уточнение" Height="Auto" VerticalAlignment="Top" Width="Auto" Margin="4" HorizontalContentAlignment="Stretch">
                         <Grid>
-                            <Button Content="CG" Name="RefCG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,10,0,0" Click="RefCG_OnClick"/>
-                            <Button Content="FG" Name="RefFG" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="95,10,0,0" Click="RefFG_OnClick"/>
-                            <Button Content="AKL" Name="RefAKL" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="10,40,0,0" Click="RefAKL_OnClick"/>
-                            <Button Content="MLR" Name="RefMLR" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="80" Margin="95,40,0,0" IsEnabled="False"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <RadioButton Grid.Row="0" Content="Complete Greedy" GroupName="RefinementMode" Name="CGMode" Margin="4" VerticalAlignment="Center" IsChecked="True"/>
+                            <RadioButton Grid.Row="1" Content="Fast Greedy" GroupName="RefinementMode" Name="FGMode" Margin="4" VerticalAlignment="Center"/>
+                            <RadioButton Grid.Row="2" Content="Adapted Kernighan-Lin" GroupName="RefinementMode" Name="AKLMode" Margin="4" VerticalAlignment="Center"/>
                         </Grid>
                     </GroupBox>
+                    <Button Grid.Row="2" Content="Кластеризовать" Margin="4" Click="Cluster_Click"/>
                 </Grid>
             </GroupBox>
-            <TextBlock HorizontalAlignment="Left" Height="25" Margin="10,301,0,0" TextWrapping="Wrap" Text="Нарисовать:" VerticalAlignment="Top" Width="Auto"/>
-            <Button Content="Круговой" HorizontalAlignment="Left" Height="25" Margin="10,386,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRound_OnClick"/>
-            <Button Content="Со случайным расположением" HorizontalAlignment="Left" Height="25" Margin="10,356,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserRandom_OnClick"/>
-            <Button Content="Учитывая время" HorizontalAlignment="Left" Height="25" Margin="10,326,0,0" VerticalAlignment="Top" Width="199" Click="DrawInBrowserTime_OnClick"/>
+            <Grid Grid.Row="2" VerticalAlignment="Bottom">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Margin="4" HorizontalAlignment="Left" Height="25" TextWrapping="Wrap" Text="Нарисовать:" VerticalAlignment="Center" Width="Auto"/>
+                <Button Grid.Row="1" Margin="4" Content="Круговой" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserRound_OnClick"/>
+                <Button Grid.Row="2" Margin="4" Content="Со случайным расположением" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center"  Click="DrawInBrowserRandom_OnClick"/>
+                <Button Grid.Row="3" Margin="4" Content="Учитывая время" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserTime_OnClick"/>
+                <Button Grid.Row="4" Margin="4" Content="С весами ребер" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserWeight_OnClick"/>
+            </Grid>
         </Grid>
         <Grid Column="1">
             <Grid.RowDefinitions>
@@ -51,8 +80,16 @@
             <TextBlock Grid.Row="1" HorizontalAlignment="Left" Name="ModularityValue" Margin="7,2,2,2" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding Path=ModularityText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TreeView Grid.Row="2" Name="ClusterTree" HorizontalAlignment="Stretch" Margin="2,2,2,2" VerticalAlignment="Stretch" ItemsSource="{Binding Path=TreeItems,  UpdateSourceTrigger=PropertyChanged}"  MouseDoubleClick="ClusterTree_OnMouseDoubleClick"/>
         </Grid>
-        <Grid Column="2">
-            <TreeView Name="InfoTree" HorizontalAlignment="Stretch" Margin="2,39,2,2" VerticalAlignment="Stretch" ItemsSource="{Binding Path=InfoItems,  UpdateSourceTrigger=PropertyChanged}"/>
+        <GridSplitter Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="5"/>
+        <Grid Column="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="7,2,0,0" TextWrapping="Wrap" Text="Значение квадртичного отклонения для свойств:" VerticalAlignment="Top"/>
+            <TextBlock Grid.Row="1" HorizontalAlignment="Left" Name="SquareErrorValue" Margin="7,2,2,2" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding Path=SquareErrorText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TreeView Grid.Row="2" Name="InfoTree" HorizontalAlignment="Stretch" Margin="2,2,2,2" VerticalAlignment="Stretch" ItemsSource="{Binding Path=InfoItems,  UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
     </Grid>
 </Window>

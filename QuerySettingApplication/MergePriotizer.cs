@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace QuerySettingApplication
 {
@@ -29,20 +30,51 @@ namespace QuerySettingApplication
         
         private List<WeigthedPair> _pairs = new List<WeigthedPair>();//= new Dictionary<ClusterPair, double>();
         private int num;
+
+        private struct MyStruct
+        {
+            internal int A;
+            internal int B;
+        }
+
         internal void Initialize(IClusterService service)
         {
             num = service.NumClusters();
 
-            for (int i = 0; i < num; i++)
+            foreach (var edge in service.Graph.Edges)
+            {
+                var i = edge.source;
+                var j = edge.target;
+
+                var w = service.DeltaWeightOfMerge(i, j);
+
+                if (w > 0)
+                    _pairs.Add(new WeigthedPair() { C = i, D = j, Weigth = w });
+
+                i = edge.target;
+                j = edge.source;
+
+                w = service.DeltaWeightOfMerge(i, j);
+
+                if (w > 0)
+                    _pairs.Add(new WeigthedPair() { C = i, D = j, Weigth = w });
+            }
+
+            /*for (int i = 0; i < num; i++)
             {
                 for (int j = 0; j < num; j++)
                 {
                     if (i == j)
                         continue;
 
-                    _pairs.Add(new WeigthedPair() {C = i, D = j, Weigth = service.DeltaWeightOfMerge(i, j)});
+                    var w = service.DeltaWeightOfMerge(i, j);
+
+                    if (w <= 0)
+                        continue;
+
+                    _pairs.Add(new WeigthedPair() {C = i, D = j, Weigth = w});
                 }
-            }
+            }*/
 
             _pairs.Sort();
         }
