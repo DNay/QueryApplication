@@ -29,7 +29,7 @@ namespace QuerySettingApplication
         }
         
         private List<WeigthedPair> _pairs = new List<WeigthedPair>();//= new Dictionary<ClusterPair, double>();
-        private int num;
+        private int _num;
 
         private struct MyStruct
         {
@@ -39,7 +39,7 @@ namespace QuerySettingApplication
 
         internal void Initialize(IClusterService service)
         {
-            num = service.NumClusters();
+            _num = service.NumClusters();
 
             foreach (var edge in service.Graph.Edges)
             {
@@ -50,31 +50,7 @@ namespace QuerySettingApplication
 
                 if (w > 0)
                     _pairs.Add(new WeigthedPair() { C = i, D = j, Weigth = w });
-
-                i = edge.target;
-                j = edge.source;
-
-                w = service.DeltaWeightOfMerge(i, j);
-
-                if (w > 0)
-                    _pairs.Add(new WeigthedPair() { C = i, D = j, Weigth = w });
             }
-
-            /*for (int i = 0; i < num; i++)
-            {
-                for (int j = 0; j < num; j++)
-                {
-                    if (i == j)
-                        continue;
-
-                    var w = service.DeltaWeightOfMerge(i, j);
-
-                    if (w <= 0)
-                        continue;
-
-                    _pairs.Add(new WeigthedPair() {C = i, D = j, Weigth = w});
-                }
-            }*/
 
             _pairs.Sort();
         }
@@ -109,7 +85,47 @@ namespace QuerySettingApplication
         {
             _pairs.RemoveAll(t => t.D == D || t.D == C || t.C == C || t.C == D);
 
-            for (int i = 0; i < num; i++)
+            var list = new List<int>();
+            for (int i = 0; i < _num; i++)
+                if (service.GetContainigCluster(i) == C)
+                    list.Add(i);
+
+            foreach (var v in list)
+            {
+                List<int> nodes = service.GetIndVertexes(v);
+                if (nodes == null)
+                    continue;
+
+                nodes.RemoveAll(list.Contains);
+
+                foreach (var node in nodes)
+                {
+                    var cTarget = service.GetContainigCluster(node);
+                    if (_pairs.Any(p => (p.C == C && p.D == cTarget) || (p.C == cTarget && p.D == C)))
+                        continue;
+
+                    var w = service.DeltaWeightOfMerge(C, cTarget);
+
+                    if (w > 0)
+                        _pairs.Add(new WeigthedPair() { C = C, D = cTarget, Weigth = w });
+                }
+            }
+
+            /*foreach (var edge in service.Graph.Edges)
+            {
+                if (!list.Contains(edge.target))
+                    continue;
+
+                var j = edge.source;
+
+                var w = service.DeltaWeightOfMerge(j, C);
+
+                if (w > 0)
+                    _pairs.Add(new WeigthedPair() { C = j, D = C, Weigth = w });
+            }*/
+
+            /*
+            for (int i = 0; i < _num; i++)
             {    
                 if (C != i)
                 {
@@ -147,9 +163,10 @@ namespace QuerySettingApplication
                     if (isNeed2)
                         _pairs.Insert(ind2, p2);
                 }
-            }
+            }*/
+            
 
-            //_pairs.Sort();
+            _pairs.Sort();
         }
 
         public int NumPozitivePairs()

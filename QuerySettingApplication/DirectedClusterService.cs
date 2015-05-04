@@ -307,6 +307,10 @@ namespace QuerySettingApplication
         }
 
         public IGraph Graph { get; private set; }
+        public List<int> GetIndVertexes(int v)
+        {
+            return null;
+        }
 
         internal void RecalcWeightOfClustering()
         {
@@ -482,5 +486,6 @@ namespace QuerySettingApplication
         void AKL();
 
         IGraph Graph { get; }
+        List<int> GetIndVertexes(int v);
     }
 }

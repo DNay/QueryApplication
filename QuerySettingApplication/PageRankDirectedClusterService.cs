@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters;
 using MathNet.Numerics.LinearAlgebra;
 using QuerySettingApplication.Annotations;
 
@@ -22,7 +23,7 @@ namespace QuerySettingApplication
         private float _modilarity;
         private float[] _inDegree;
         private float[] _outDegree;
-        private Matrix<float> A;
+        private List<int>[] A;
         private int[] _cluster;
         private Matrix<float> P;
         private Vector<float> pi;
@@ -47,7 +48,8 @@ namespace QuerySettingApplication
             _inDegree = new float[_numV];
             _outDegree = new float[_numV];
             _cluster = new int[_numV];
-            A = Matrix<float>.Build.Dense(_numV, _numV);
+            A = new List<int>[_numV];//Matrix<float>.Build.Dense(_numV, _numV);
+
             foreach (var vertex in graph.Vertexes)
             {
                 _cluster[vertex.Id] = vertex.Cluster;
@@ -58,7 +60,9 @@ namespace QuerySettingApplication
                 _inDegree[edge.target]++;
                 _outDegree[edge.source]++;
 
-                A[edge.source, edge.target] = 1;
+                if (A[edge.source] == null)
+                    A[edge.source] = new List<int>();
+                A[edge.source].Add(edge.target);// = 1;
             }
 
             var G = Matrix<float>.Build.Dense(_numV, _numV, CalcGij);
@@ -93,12 +97,19 @@ namespace QuerySettingApplication
 
             var sum = _outDegree[i];
             var a = sum == 0 ? 1.0 : 0.0;
-            var f = sum == 0 ? 0.0 : alpha*A[i, j] / sum;
+            var aij = 0.0;
+            if (A[i] != null)
+                aij = A[i].Contains(j) ? 1.0 : 0.0;
+            var f = sum == 0 ? 0.0 : alpha*aij / sum;
             return (float) (f + (alpha * a + 1.0 - alpha) / _numV);
         }
 
-        private double CalcGijMarkov(int i, int j)
+        /*private double CalcGijMarkov(int i, int j)
         {
+            var aij = 0.0;
+            if (A[i] != null)
+                aij = A[i].Contains(j) ? 1.0 : 0.0;
+
             if (A[i, j] == 0)
                 return 0;
 
@@ -107,7 +118,7 @@ namespace QuerySettingApplication
                 sum += A[i, k];
 
             return 1 / sum;
-        }
+        }*/
 
         public void Initialize(IGraph graph, int num)
         {
@@ -305,10 +316,18 @@ namespace QuerySettingApplication
         }
 
         public IGraph Graph { get; private set; }
+        public List<int> GetIndVertexes(int v)
+        {
+            return A[v];
+        }
 
         internal double Weight(int source, int target)
         {
-            return A[source, target];
+            var aij = 0.0;
+            if (A[source] != null)
+                aij = A[source].Contains(target) ? 1.0 : 0.0;
+
+            return aij;
         }
 
         internal double InDegree(int vertex)
@@ -328,7 +347,7 @@ namespace QuerySettingApplication
 
         internal double Weight(int source, List<int> targets)
         {
-            return targets.Sum(target => A[source, target]);
+            return targets.Sum(target => Weight(source, target));
         }
 
         public int NumVertexes()

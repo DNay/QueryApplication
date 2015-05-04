@@ -94,30 +94,33 @@ namespace QuerySettingApplication
 
         private void LoadFromFile(string fileName)
         {
-            var gr = ServiceSingletons.QueryProcessor.CiteNet = new CiteNet();
-            using (var file = File.OpenText(fileName))
+            Task.Factory.StartNew(() =>
             {
-                while (true)
+                var gr = ServiceSingletons.QueryProcessor.CiteNet = new CiteNet();
+                using (var file = File.OpenText(fileName))
                 {
-                    var str = file.ReadLine();
+                    while (true)
+                    {
+                        var str = file.ReadLine();
 
-                    if (string.IsNullOrEmpty(str))
-                        break;
+                        if (string.IsNullOrEmpty(str))
+                            break;
 
-                    if (str.StartsWith("#"))
-                        continue;
+                        if (str.StartsWith("#"))
+                            continue;
 
-                    var res = str.Split(new [] {'\t', ' '}).ToList();
+                        var res = str.Split(new[] {'\t', ' '}).ToList();
 
-                    var outV = gr.AddVertex(res[0]);
-                    var inV = gr.AddVertex(res[1]);
+                        var outV = gr.AddVertex(res[0]);
+                        var inV = gr.AddVertex(res[1]);
 
-                    gr.AddEdge(new Edge(outV.Id, inV.Id), false);
+                        gr.AddEdge(new Edge(outV.Id, inV.Id), false);
 
-                    NumVertexesProp = gr.NumVertexes;
-                    NumEdgesProp = gr.Edges.Count;
+                        NumVertexesProp = gr.NumVertexes;
+                        NumEdgesProp = gr.Edges.Count;
+                    }
                 }
-            }
+            });
         }
 
         private void Load_Click(object sender, RoutedEventArgs e)
