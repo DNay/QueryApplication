@@ -26,7 +26,7 @@ namespace QuerySettingApplication
         public MainWindow()
         {
             InitializeComponent();
-            ServiceSingletons.MainWindow = this;
+            //ServiceSingletons.MainWindow = this;
             MaxVertCountProp = 600;
             CurrentEntityProp = "http://acm.rkbexplorer.com/id/1008169";
             PredicateTextProp = "akt:cites-publication-reference";
@@ -73,23 +73,52 @@ namespace QuerySettingApplication
 
         private bool OpenXml(string path)
         {
-            var serializer = new XmlSerializer(typeof(CiteNet));
-            var fileStream = File.OpenRead(path);
+            var result = false;
 
+            FileStream fileStream = File.OpenRead(path);
             try
             {
+                var serializer = new XmlSerializer(typeof (CiteNet));
+
                 var graph = serializer.Deserialize(fileStream) as CiteNet;
                 ServiceSingletons.QueryProcessor.CiteNet = graph;
-                fileStream.Close();
+                ServiceSingletons.QueryProcessor.GraphAuthors = new AuthorsGraph();
                 UpdateFields();
 
-                return true;
+                result = true;
             }
-
             catch (Exception)
             {
-                return false;
+                result = false;
             }
+            finally
+            {
+                fileStream.Close();
+            }
+
+            if (!result)
+            {
+                fileStream = File.OpenRead(path);
+                try
+                {
+                    var serializer = new XmlSerializer(typeof (AuthorsGraph));
+
+                    var graph = serializer.Deserialize(fileStream) as AuthorsGraph;
+                    ServiceSingletons.QueryProcessor.GraphAuthors = graph;
+                    ServiceSingletons.QueryProcessor.CiteNet = new CiteNet();
+                    fileStream.Close();
+                    UpdateFields();
+
+                    result = true;
+                }
+                catch (Exception)
+                {
+                    result = false;
+                }
+
+            }
+
+            return result;
         }
 
         private void LoadFromFile(string fileName)
@@ -161,45 +190,24 @@ namespace QuerySettingApplication
 
         private void LoadAuth_Click(object sender, RoutedEventArgs e)
         {
-            var openDialog = new OpenFileDialog();
-            openDialog.Filter = "Граф (.xml)|*.xml";
-
-            if (openDialog.ShowDialog() == true)
-            {
-                var serializer = new XmlSerializer(typeof(AuthorsGraph));
-                var fileStream = File.OpenRead(openDialog.FileName);
-
-                try
-                {
-                    var graph = serializer.Deserialize(fileStream) as AuthorsGraph;
-                    ServiceSingletons.QueryProcessor.GraphAuthors = graph;
-                    fileStream.Close();
-                    UpdateFields();
-
-                    //var strJ = File.ReadAllText(openDialog.FileName.Replace(".xml", ".json"));
-                    //var graph = JsonConvert.DeserializeObject<Graph>(strJ);
-                    //ServiceSingletons.QueryProcessor.Graph = graph;
-                }
-
-                catch (Exception)
-                {
-                    MessageBox.Show("Не удалось открыть файл");
-                }
-
-            }
-        }
-
-        private void Authors_Click(object sender, RoutedEventArgs e)
-        {
             ServiceSingletons.QueryProcessor.GetAuthors2();
+            ServiceSingletons.QueryProcessor.CiteNet = new CiteNet();
+            UpdateFields();
         }
 
         private void UpdateFields()
         {
-            NumVertexesProp = ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Count;
-            NumEdgesProp = ServiceSingletons.QueryProcessor.CiteNet.Edges.Count;
-            NumVertexesAuthProp = ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Count.ToString();
-            NumEdgesAuthProp = ServiceSingletons.QueryProcessor.GraphAuthors.Edges.Count.ToString();
+            if (ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any())
+            {
+                NumVertexesProp = ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Count;
+                NumEdgesProp = ServiceSingletons.QueryProcessor.GraphAuthors.Edges.Count;
+            }
+            else
+            {
+                NumVertexesProp = ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Count;
+                NumEdgesProp = ServiceSingletons.QueryProcessor.CiteNet.Edges.Count;
+            }
+
 
             RaisePropertyChanged("GraphDescription");
             RaisePropertyChanged("IsVisibleGraphDescriptionPrp");
@@ -208,10 +216,22 @@ namespace QuerySettingApplication
 
         private void Cluster_Click(object sender, RoutedEventArgs e)
         {
+            var isAuthNet = ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any();
+            
             var service = LinkRankMode.IsChecked.HasValue && LinkRankMode.IsChecked.Value
                 ? ServiceSingletons.PageRankClusterService
                 : ServiceSingletons.ClusterService;
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet, service);
+
+            if (isAuthNet)
+                service = LinkRankMode.IsChecked.HasValue && LinkRankMode.IsChecked.Value
+                    ? ServiceSingletons.PageRankClusterAuthService
+                    : ServiceSingletons.ClusterAuthService;
+
+            IGraph graph = isAuthNet
+                    ? (IGraph) ServiceSingletons.QueryProcessor.GraphAuthors
+                    : ServiceSingletons.QueryProcessor.CiteNet;
+
+            var clusterWindow = new ClusteringWindow(graph, service);
             clusterWindow.Closed += OnBack;
             clusterWindow.Show();
             this.Hide();
@@ -266,7 +286,7 @@ namespace QuerySettingApplication
 
         public bool IsClusteringEnabled
         {
-            get { return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Count > 0; }
+            get { return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any() || ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any(); }
         }
 
         public int MaxVertCountProp
@@ -319,12 +339,21 @@ namespace QuerySettingApplication
 
         public string GraphDescription
         {
-            get { return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any() ? "Сеть цитирования" : "Граф не загружен"; }
+            get
+            {
+                if (ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any())
+                    return "Граф авторов";
+                return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any() ? "Сеть цитирования" : "Граф не загружен";
+            }
         }
 
         public bool IsVisibleGraphDescriptionPrp
         {
-            get { return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Count > 0; }
+            get
+            {
+                return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any() ||
+                       ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any();
+            }
         }
 
         private void RaisePropertyChanged(string propName)

@@ -86,7 +86,7 @@ namespace QuerySettingApplication
                     Console.Write(ex.Message);
                 }
 
-                ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
+                //ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
             }
 
             foreach (var edge in CiteNet.Edges)
@@ -125,7 +125,7 @@ namespace QuerySettingApplication
                             GraphAuthors.AddVertex(auth);
                     }
 
-                ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
+                //ServiceSingletons.MainWindow.NumVertexesAuthProp = GraphAuthors.NumVertexes.ToString();
             }
 
             foreach (var edge in CiteNet.Edges)
@@ -154,7 +154,7 @@ namespace QuerySettingApplication
                 v.Infos = ProcessAuthorInfoQuery(v.Name);
             }
 
-            ServiceSingletons.MainWindow.NumEdgesAuthProp = GraphAuthors.Edges.Count.ToString();
+            //ServiceSingletons.MainWindow.NumEdgesAuthProp = GraphAuthors.Edges.Count.ToString();
         }
 
         private void ProcessAuthorQuery(string currentEntity)

@@ -13,7 +13,7 @@ namespace QuerySettingApplication
     public partial class OnlineLoadWindow : Window, INotifyPropertyChanged
     {
         private string _currentEntityProp;
-        private string _predicateTextProp;
+        private string _predicateTextProp = "";
         private int _numVertexesProp;
         private int _numEdgesProp;
         private int _maxVertCountProp;
@@ -21,6 +21,10 @@ namespace QuerySettingApplication
         public OnlineLoadWindow()
         {
             InitializeComponent();
+            ServiceSingletons.MainWindow = this;
+            MaxVertCountProp = 500;
+            CurrentEntityProp = "http://acm.rkbexplorer.com/id/806991";
+            PredicateTextProp = "akt:cites-publication-reference";
         }
 
         private void Back_Click(object sender, RoutedEventArgs e)
@@ -37,6 +41,7 @@ namespace QuerySettingApplication
 
         private void Start_Button_Click(object sender, RoutedEventArgs e)
         {
+            ServiceSingletons.QueryProcessor.GraphAuthors = new AuthorsGraph();
             Task.Factory.StartNew(() =>
             {
                 ServiceSingletons.QueryProcessor.StartProcess(PredicateTextProp, CurrentEntityProp, MaxVertCountProp);

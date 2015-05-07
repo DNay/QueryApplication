@@ -13,6 +13,7 @@
             <MenuItem Header="Загрузить">
                 <MenuItem Header="Открыть файл с графом" Click="Load_Click"></MenuItem>
                 <MenuItem Header="Извлечь сеть из репозитория" Click="LoadFromRep_Click"></MenuItem>
+                <MenuItem Header="Извлечь авторов из сети цитирования" Click="LoadAuth_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="Сохранить" Click="Save_Click"></MenuItem>
         </Menu>

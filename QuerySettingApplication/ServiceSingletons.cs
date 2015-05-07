@@ -16,7 +16,7 @@
             get { return _jenaFusekiHelper; }
         }
 
-        public static MainWindow MainWindow { get; set; }
+        public static OnlineLoadWindow MainWindow { get; set; }
 
         private static IClusterService _clusterServicePR = new PageRankDirectedClusterService<VertexPublication>();
 

@@ -22,6 +22,7 @@ namespace QuerySettingApplication
         private float[] _outDegree;
         private int[,] _matr;
         private int[] _cluster;
+        private List<int>[] A;
 
         private string _logPath = "cmn.log";
 
@@ -44,6 +45,7 @@ namespace QuerySettingApplication
             _outDegree = new float[_numV];
             _cluster = new int[_numV];
             _matr = new int[_numV, _numV];
+            A = new List<int>[_numV];
 
             foreach (var vertex in graph.Vertexes)
             {
@@ -56,6 +58,10 @@ namespace QuerySettingApplication
                 _outDegree[edge.source]++;
 
                 _matr[edge.source, edge.target] = 1;
+
+                if (A[edge.source] == null)
+                    A[edge.source] = new List<int>();
+                A[edge.source].Add(edge.target);
             }
 
             foreach (var edge in graph.Edges)
@@ -309,7 +315,7 @@ namespace QuerySettingApplication
         public IGraph Graph { get; private set; }
         public List<int> GetIndVertexes(int v)
         {
-            return null;
+            return A[v];
         }
 
         internal void RecalcWeightOfClustering()
