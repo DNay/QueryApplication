@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MoreLinq;
 
 namespace QuerySettingApplication
 {
@@ -22,6 +23,10 @@ namespace QuerySettingApplication
         private float[] _outDegree;
         private int[,] _matr;
         private int[] _cluster;
+
+        private List<int>[] _vertexEdge;
+        private List<int>[] _clusterVertexes;
+        private List<int>[] _clusterEdge;
         private List<int>[] A;
 
         private string _logPath = "cmn.log";
@@ -45,11 +50,20 @@ namespace QuerySettingApplication
             _outDegree = new float[_numV];
             _cluster = new int[_numV];
             _matr = new int[_numV, _numV];
+            _clusterVertexes = new List<int>[_numV];
+            _vertexEdge = new List<int>[_numV];
+            _clusterEdge = new List<int>[_numV];
             A = new List<int>[_numV];
 
             foreach (var vertex in graph.Vertexes)
             {
                 _cluster[vertex.Id] = vertex.Cluster;
+                if (_clusterVertexes[vertex.Cluster] == null)
+                {
+                    _clusterVertexes[vertex.Cluster] = new List<int>();
+                    _clusterEdge[vertex.Cluster] = new List<int>();
+                }
+                _clusterVertexes[vertex.Cluster].Add(vertex.Id);
             }
 
             foreach (var edge in graph.Edges)
@@ -62,6 +76,10 @@ namespace QuerySettingApplication
                 if (A[edge.source] == null)
                     A[edge.source] = new List<int>();
                 A[edge.source].Add(edge.target);
+
+                if (_vertexEdge[edge.source] == null)
+                    _vertexEdge[edge.source] = new List<int>();
+                _vertexEdge[edge.source].Add(edge.target);
             }
 
             foreach (var edge in graph.Edges)
@@ -73,22 +91,31 @@ namespace QuerySettingApplication
             ServiceSingletons.ClusterWindow.SetModularity(WeightOfClustering());
         }
 
-        public void Initialize(IGraph graph, int num)
+        public void Initialize()
         {
-            Initialize(graph as Graph<T>, num);
-        }
-
-        private void Initialize(Graph<T> graph, int num)
-        {
-            int curCl = 0;
-            for (var i = 0; i < graph.NumVertexes; )
+            for (int i = 0; i < _numV; i++)
             {
-                for (int j = 0; j < num && i < graph.NumVertexes; j++)
+                _clusterVertexes[i] = new List<int>() { i };
+                _cluster[i] = i;
+                _clusterEdge[i] = new List<int>();
+            }
+
+            for (var i = 0; i < _vertexEdge.Length; i++)
+            {
+                if (_vertexEdge[i] == null)
+                    continue;
+
+                foreach (var v in _vertexEdge[i])
                 {
-                    _cluster[i] = curCl;
-                    i++;
+                    var t = GetContainigCluster(v);
+                    var s = i;
+
+                    if (!_clusterEdge[s].Contains(t))
+                        _clusterEdge[s].Add(t);
+
+                    if (!_clusterEdge[t].Contains(s))
+                        _clusterEdge[t].Add(s);
                 }
-                curCl++;
             }
 
             RecalcWeightOfClustering();
@@ -97,22 +124,29 @@ namespace QuerySettingApplication
 
         public void Renumber()
         {
-            var cluster = new int[_numV];
-            var convertNumbers = new Dictionary<int, int>();
-            var curNum = 0;
-
+            var l = _clusterVertexes.Where(v => v != null && v.Any()).ToList();
             for (int i = 0; i < _numV; i++)
             {
-                if (!convertNumbers.ContainsKey(_cluster[i]))
+                if (i < l.Count)
                 {
-                    convertNumbers.Add(_cluster[i], curNum);
-                    curNum++;
+                    _clusterVertexes[i] = l[i];
+                    foreach (var v in _clusterVertexes[i])
+                    {
+                        _cluster[v] = i;
+                    }
                 }
-
-                cluster[i] = convertNumbers[_cluster[i]];
+                else
+                    _clusterVertexes[i] = null;
             }
 
-            _cluster = cluster;
+            l = _clusterEdge.Where(e => e != null && e.Any()).ToList();
+            for (int i = 0; i < _numV; i++)
+            {
+                if (i < l.Count)
+                    _clusterEdge[i] = l[i];
+                else
+                    _clusterEdge[i] = null;
+            }
         }
 
         public int GetContainigCluster(int id)
@@ -122,9 +156,7 @@ namespace QuerySettingApplication
 
         public int NumClusters()
         {
-            if (_cluster == null)
-                return 0;
-            return _cluster.Max() + 1;
+            return _clusterVertexes.Count(t => t != null);
         }
 
         public void SSG()
@@ -318,6 +350,11 @@ namespace QuerySettingApplication
             return A[v];
         }
 
+        public List<int> GetIndClusters(int c)
+        {
+            return _clusterEdge[c];
+        }
+
         internal void RecalcWeightOfClustering()
         {
             float result = 0;
@@ -341,21 +378,8 @@ namespace QuerySettingApplication
         {
             float result = 0;
 
-            var outs = new List<int>();
-            var ins = new List<int>();
-
-            for (int i = 0; i < _numV; i++)
-            {
-                if (_cluster[i] == C)
-                {
-                    outs.Add(i);
-                    continue;
-                }
-                if (_cluster[i] == D)
-                    ins.Add(i);
-            }
-
-
+            var outs = _clusterVertexes[C];
+            var ins = _clusterVertexes[D];
 
             foreach (var i in ins)
             {
@@ -374,26 +398,23 @@ namespace QuerySettingApplication
 
             float result = 0;
 
-            var vC = new List<int>();
-            var vD = new List<int>();
-            var fvD = 0;
-            var fvC = 0;
+            var vC = _clusterVertexes[C];
+            var vD = _clusterVertexes[D];
+            if (vD == null)
+                return 0;
+            var fvD = (float)0.0;
+            var fvC = (float)0.0;
 
-            for (int i = 0; i < _numV; i++)
+            foreach (var c in vC)
             {
-                if (_cluster[i] == C && i != v)
-                {
-                    vC.Add(i);
-                    fvC += _matr[i, v];
-                    fvC += _matr[v, i];
-                    continue;
-                }
-                if (_cluster[i] == D)
-                {
-                    vD.Add(i);
-                    fvD += _matr[v, i];
-                    fvD += _matr[i, v];
-                }
+                fvC += _matr[c, v];
+                fvC += _matr[v, c];
+            }
+
+            foreach (var d in vD)
+            {
+                fvD += _matr[d, v];
+                fvD += _matr[v, d];
             }
 
             result += fvD - fvC;
@@ -452,8 +473,14 @@ namespace QuerySettingApplication
 
         internal void Move(int v, int D)
         {
-            var C = _cluster[v];
             _cluster[v] = D;
+
+            var C = GetContainigCluster(v);
+            _clusterVertexes[C].Remove(v);
+            if (!_clusterVertexes[C].Any())
+                _clusterVertexes[C] = null;
+
+            _clusterVertexes[D].Add(v);
 
             RecalcWeightOfClustering();
             _vertexMovePriotizer.OnMove(v, C, D, this);
@@ -461,11 +488,19 @@ namespace QuerySettingApplication
 
         internal void Merge(int C, int D)
         {
-            for (int i = 0; i < _numV; i++)
+            foreach (var d in _clusterVertexes[D])
             {
-                if (_cluster[i] == D)
-                    _cluster[i] = C;
+                _cluster[d] = C;
             }
+
+            _clusterVertexes[C].AddRange(_clusterVertexes[D]);
+            _clusterVertexes[C] = _clusterVertexes[C].Distinct().ToList();
+            _clusterVertexes[D] = null;
+
+            _clusterEdge[C].AddRange(_clusterEdge[D]);
+            _clusterEdge[C] = _clusterEdge[C].Distinct().ToList();
+            _clusterEdge.ForEach(c => c.Remove(D));
+
             RecalcWeightOfClustering();
 
             _mergePriotizer.OnMerge(C, D, this);
@@ -479,7 +514,7 @@ namespace QuerySettingApplication
         float DeltaWeightOfMoving(int i, int cluster);
         void SetGraph(IGraph graph);
 
-        void Initialize(IGraph graph, int num);
+        void Initialize();
         void CG();
         void SSG();
         int GetContainigCluster(int id);
@@ -493,5 +528,6 @@ namespace QuerySettingApplication
 
         IGraph Graph { get; }
         List<int> GetIndVertexes(int v);
+        List<int> GetIndClusters(int c);
     }
 }

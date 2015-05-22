@@ -62,12 +62,14 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Margin="4" HorizontalAlignment="Left" Height="25" TextWrapping="Wrap" Text="Нарисовать:" VerticalAlignment="Center" Width="Auto"/>
                 <Button Grid.Row="1" Margin="4" Content="Круговой" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserRound_OnClick"/>
                 <Button Grid.Row="2" Margin="4" Content="Со случайным расположением" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center"  Click="DrawInBrowserRandom_OnClick"/>
                 <Button Grid.Row="3" Margin="4" Content="Учитывая время" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserTime_OnClick"/>
                 <Button Grid.Row="4" Margin="4" Content="С весами ребер" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserWeight_OnClick"/>
+                <Button Grid.Row="5" Margin="4" Content="По кластерам" HorizontalAlignment="Stretch" Height="25" VerticalAlignment="Center" Click="DrawInBrowserClusers_OnClick"/>
             </Grid>
         </Grid>
         <Grid Column="1">

@@ -67,7 +67,29 @@
             .attr("markerWidth", "10")
             .attr("markerHeight", "10")
             .append("polyline")
-            .attr("points", "0,0 -4,-1 -3,0 -4,1")
+            .attr("points", "0,0 -5,-1.2 -3,0 -5,1.2")
+            .attr("fill", "red");
+
+    defs.append("marker")
+            .attr("id", "smallMarker")
+            .attr("viewBox", "-10 -10 20 20")
+            .attr("markerUnits", "strokeWidth")
+            .attr("orient", "auto")
+            .attr("markerWidth", "40")
+            .attr("markerHeight", "40")
+            .append("polyline")
+            .attr("points", "0,0 -5,-1 -3,0 -5,1")
+            .attr("fill", "red");
+
+    defs.append("marker")
+            .attr("id", "smallMarker2")
+            .attr("viewBox", "-10 -10 20 20")
+            .attr("markerUnits", "strokeWidth")
+            .attr("orient", "auto")
+            .attr("markerWidth", "20")
+            .attr("markerHeight", "20")
+            .append("polyline")
+            .attr("points", "0,0 -5,-1 -3,0 -5,1")
             .attr("fill", "red");
 
     var drag = force.drag()
@@ -82,12 +104,41 @@
                 .links(graph.Edges)
                 .start();
 
+        var min = -1;
+        var max = 0;
+        for(var i in graph.Edges)
+        {
+            var e = graph.Edges[i];
+            if (max < e.weight)
+                max = e.weight;
+            if (min == -1 || min > e.weight)
+                min = e.weight;
+        }
+
+        var k = 0;
+        if (max != min)
+            k = 10 / (max - min);
+        var a = 1 - k * min;
+
         link = svg.selectAll(".link")
                 .data(graph.Edges)
                 .enter().append("line")
                 .attr("class", "link")
-                .attr("marker-end", "url(#myMarker)")
-                .style("stroke-width", function(d) { return 200 * d.weight; });
+                .attr("marker-end", function(d)
+                { if (k * d.weight + a < 4) {
+                    if (k * d.weight + a < 2)
+                        return "url(#smallMarker)";
+                    else
+                        return "url(#smallMarker2)";
+                }
+                  else
+                    return "url(#myMarker)"; })
+                .style("stroke-width", function(d) {
+                        return k * d.weight + a + 1;
+                });
+        link.append("title")
+                .text(function(d) { return d.weight; });
+
         node = node.data(graph.Vertexes)
                 .enter().append("circle")
                 .attr("class", "node")
@@ -99,7 +150,7 @@
                 .call(drag);
 
         node.append("title")
-                .text(function(d) { return d.name; });
+                .text(function(d) { return d.Name; });
 
     });
 

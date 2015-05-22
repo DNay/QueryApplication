@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using MoreLinq;
 using Newtonsoft.Json;
 
 namespace QuerySettingApplication
@@ -41,7 +40,7 @@ namespace QuerySettingApplication
                 return;
             _isProcessed = true;
             //init
-            _clustService.Initialize(_graph, 1);
+            _clustService.Initialize();
             UpdateGroupsGraph();
             SetModularity(_clustService.WeightOfClustering());
 
@@ -82,6 +81,7 @@ namespace QuerySettingApplication
                     _clustService.AKL();
                     break;
             }
+
             UpdateGroupsGraph();
         }
 
@@ -93,6 +93,7 @@ namespace QuerySettingApplication
             }
             RaisePropertyChanged("TreeItems");
             RaisePropertyChanged("InfoItems");
+            _isProcessed = false;
         }
 
         public void SetModularity(double currM)
@@ -397,26 +398,62 @@ namespace QuerySettingApplication
 
         private void PrepareJsonData(DrawModEnum mode)
         {
+            var graph = _graph;
+
             switch (mode)
             {
                 case DrawModEnum.ROUND:
-                    PositingPointsCircle(_graph);
+                    PositingPointsCircle(graph);
                     break;
                 case DrawModEnum.RANDOM:
-                    PositingPointsComponentRandom(_graph);
+                    PositingPointsComponentRandom(graph);
                     break;
                 case DrawModEnum.TIME:
-                    PositingPointsComponentTime(_graph);
+                    PositingPointsComponentTime(graph);
+                    break;
+                case DrawModEnum.CLUSTERS:
+                    graph = GetClusterGraph();
                     break;
                 default:
                     break;
             }
 
-            CalculateDegree(_graph);
-            var strJ = JsonConvert.SerializeObject(_graph);
+            if (mode != DrawModEnum.CLUSTERS)
+                CalculateDegree(graph);
+
+            var strJ = JsonConvert.SerializeObject(graph);
             var fileStreamJ = File.CreateText("page//graph2.json");
             fileStreamJ.Write(strJ);
             fileStreamJ.Close();
+        }
+
+        private IGraph GetClusterGraph()
+        {
+            var res = new Graph<Vertex>();
+            for (var i = 0; i < _clustService.NumClusters(); i++)
+            {
+                var v = res.AddVertex(i.ToString());
+                v.Cluster = i;
+            }
+
+            foreach (var vertex in _graph.Vertexes)
+            {
+                var cl = vertex.Cluster;
+                res.GetVertex(cl.ToString()).degreeIn++;
+
+                var indV = _clustService.GetIndVertexes(vertex.Id);
+                if (indV != null)
+                    foreach (var v in indV)
+                    {
+                        var vcl = _clustService.GetContainigCluster(v);
+                        if (vcl == cl)
+                            continue;
+                        var e = res.AddEdge(new Edge(cl, vcl));
+                        e.weight += 0.01;
+                    }
+            }
+
+            return res;
         }
 
         private void CalculateDegree(IGraph graph)
@@ -467,13 +504,17 @@ namespace QuerySettingApplication
         {
             DrawProcess(DrawModEnum.WEIGHT);
         }
+        private void DrawInBrowserClusers_OnClick(object sender, RoutedEventArgs e)
+        {
+            DrawProcess(DrawModEnum.CLUSTERS);
+        }
 
         private void DrawProcess(DrawModEnum mode)
         {
             PrepareJsonData(mode);
 
             var path = "\"" + Path + "\"";
-            if (mode == DrawModEnum.WEIGHT)
+            if (mode == DrawModEnum.WEIGHT || mode == DrawModEnum.CLUSTERS)
                 path = "\"" + WPath + "\"";
 
             try
@@ -659,7 +700,7 @@ namespace QuerySettingApplication
 
         internal enum DrawModEnum
         {
-            ROUND, RANDOM, TIME, WEIGHT
+            ROUND, RANDOM, TIME, WEIGHT, CLUSTERS
         }
     }
 }

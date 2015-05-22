@@ -49,12 +49,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Geckofx-Core">
-      <HintPath>..\packages\GeckoFx-Windows\Geckofx-Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Geckofx-Winforms">
-      <HintPath>..\packages\GeckoFx-Windows\Geckofx-Winforms.dll</HintPath>
-    </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\packages\MathNet.Numerics.3.5.0\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>
@@ -94,12 +88,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <None Include="BrowserWindow.cs">
-      <SubType>Form</SubType>
-    </None>
-    <None Include="BrowserWindow.Designer.cs">
-      <DependentUpon>BrowserWindow.cs</DependentUpon>
-    </None>
     <Compile Include="ClusteringWindow.xaml.cs">
       <DependentUpon>ClusteringWindow.xaml</DependentUpon>
     </Compile>
@@ -108,7 +96,6 @@
     </Compile>
     <Compile Include="PageRankDirectedClusterService.cs" />
     <Compile Include="DirectedClusterService.cs" />
-    <None Include="ClusterService.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="VertexMovePriotizer.cs" />
     <Compile Include="MergePriotizer.cs" />
@@ -152,10 +139,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="BrowserWindow.resx">
-      <DependentUpon>BrowserWindow.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

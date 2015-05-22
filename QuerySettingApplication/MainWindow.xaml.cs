@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Markup;
 using System.Xml.Serialization;
 using Microsoft.Win32;
-using Newtonsoft.Json;
 
 namespace QuerySettingApplication
 {
@@ -17,29 +14,13 @@ namespace QuerySettingApplication
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private string _currentEntityProp;
-        private string _predicateTextProp;
         private int _numVertexesProp;
         private int _numEdgesProp;
-        private int _maxVertCountProp;
 
         public MainWindow()
         {
             InitializeComponent();
-            //ServiceSingletons.MainWindow = this;
-            MaxVertCountProp = 600;
-            CurrentEntityProp = "http://acm.rkbexplorer.com/id/1008169";
-            PredicateTextProp = "akt:cites-publication-reference";
         } 
-
-        private void Start_Button_Click(object sender, RoutedEventArgs e)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                ServiceSingletons.QueryProcessor.StartProcess(PredicateTextProp, CurrentEntityProp, MaxVertCountProp);
-                UpdateFields();
-            });
-        }
 
         public void OnQueryProcExited(object sender, EventArgs e)
         {
@@ -54,15 +35,20 @@ namespace QuerySettingApplication
             {
                 try
                 {
-                    var serializer = new XmlSerializer(typeof(CiteNet));
-                    var fileStream = File.Create(saveDialog.FileName);
-                    serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.CiteNet);
-                    fileStream.Close();
-
-                    var strJ = JsonConvert.SerializeObject(ServiceSingletons.QueryProcessor.CiteNet);
-                    var fileStreamJ = File.CreateText(saveDialog.FileName.Replace(".xml", ".json"));
-                    fileStreamJ.Write(strJ);
-                    fileStreamJ.Close();
+                    if (ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any())
+                    {
+                        var serializer = new XmlSerializer(typeof (CiteNet));
+                        var fileStream = File.Create(saveDialog.FileName);
+                        serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.CiteNet);
+                        fileStream.Close();
+                    }
+                    else if (ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any())
+                    {
+                        var serializer = new XmlSerializer(typeof(AuthorsGraph));
+                        var fileStream = File.Create(saveDialog.FileName);
+                        serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.GraphAuthors);
+                        fileStream.Close();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -73,7 +59,7 @@ namespace QuerySettingApplication
 
         private bool OpenXml(string path)
         {
-            var result = false;
+            bool result;
 
             FileStream fileStream = File.OpenRead(path);
             try
@@ -149,6 +135,7 @@ namespace QuerySettingApplication
                         NumEdgesProp = gr.Edges.Count;
                     }
                 }
+                UpdateFields();
             });
         }
 
@@ -166,26 +153,6 @@ namespace QuerySettingApplication
             }
 
             UpdateFields();
-        }
-
-        private void SaveAuth_Click(object sender, RoutedEventArgs e)
-        {
-            var saveDialog = new SaveFileDialog();
-            saveDialog.Filter = "Граф (.xml)|*.xml";
-
-            if (saveDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    var serializer = new XmlSerializer(typeof(AuthorsGraph));
-                    var fileStream = File.Create(saveDialog.FileName);
-                    serializer.Serialize(fileStream, ServiceSingletons.QueryProcessor.GraphAuthors);
-                    fileStream.Close();
-                }
-                catch (Exception)
-                {
-                }
-            }
         }
 
         private void LoadAuth_Click(object sender, RoutedEventArgs e)
@@ -234,34 +201,6 @@ namespace QuerySettingApplication
             var clusterWindow = new ClusteringWindow(graph, service);
             clusterWindow.Closed += OnBack;
             clusterWindow.Show();
-            this.Hide();
-        }
-        private void ClusterPageRank_Click(object sender, RoutedEventArgs e)
-        {
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.CiteNet, ServiceSingletons.PageRankClusterService);
-            clusterWindow.Show();
-        }
-
-        private void ClusterAuth_Click(object sender, RoutedEventArgs e)
-        {
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors, ServiceSingletons.ClusterAuthService);
-            clusterWindow.Show();
-        }
-
-        private void ClusterAuthPageRank_Click(object sender, RoutedEventArgs e)
-        {
-            var clusterWindow = new ClusteringWindow(ServiceSingletons.QueryProcessor.GraphAuthors, ServiceSingletons.PageRankClusterAuthService);
-            clusterWindow.Show();
-        }
-
-        public string CurrentEntityProp
-        {
-            get { return _currentEntityProp; }
-            set
-            {
-                _currentEntityProp = value;
-                RaisePropertyChanged("CurrentEntityProp");
-            }
         }
 
         public int NumVertexesProp
@@ -287,26 +226,6 @@ namespace QuerySettingApplication
         public bool IsClusteringEnabled
         {
             get { return ServiceSingletons.QueryProcessor.CiteNet.Vertexes.Any() || ServiceSingletons.QueryProcessor.GraphAuthors.Vertexes.Any(); }
-        }
-
-        public int MaxVertCountProp
-        {
-            get { return _maxVertCountProp; }
-            set
-            {
-                _maxVertCountProp = value;
-                RaisePropertyChanged("MaxVertCountProp");
-            }
-        }
-
-        public string PredicateTextProp
-        {
-            get { return _predicateTextProp; }
-            set
-            {
-                _predicateTextProp = value;
-                RaisePropertyChanged("PredicateTextProp");
-            }
         }
 
         public bool IsClusteringAuthEnabled
@@ -369,12 +288,12 @@ namespace QuerySettingApplication
             win.Closed += OnBack;
 
             win.Show();
-            this.Hide();
+            Hide();
         }
 
         private void OnBack(object sender, EventArgs eventArgs)
         {
-            this.Show();
+            Show();
         }
     }
 }

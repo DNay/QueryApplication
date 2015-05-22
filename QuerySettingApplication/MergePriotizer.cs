@@ -43,9 +43,10 @@ namespace QuerySettingApplication
 
             foreach (var edge in service.Graph.Edges)
             {
-                var i = edge.source;
-                var j = edge.target;
-
+                var i = service.GetContainigCluster(edge.source);
+                var j = service.GetContainigCluster(edge.target);
+                if (i == j)
+                    continue;
                 var w = service.DeltaWeightOfMerge(i, j);
 
                 if (w > 0)
@@ -85,30 +86,21 @@ namespace QuerySettingApplication
         {
             _pairs.RemoveAll(t => t.D == D || t.D == C || t.C == C || t.C == D);
 
-            var list = new List<int>();
-            for (int i = 0; i < _num; i++)
-                if (service.GetContainigCluster(i) == C)
-                    list.Add(i);
+            //var list = new List<int>();
+            //for (int i = 0; i < _num; i++)
+            //    if (service.GetContainigCluster(i) == C)
+            //        list.Add(i);
 
-            foreach (var v in list)
+            var list = service.GetIndClusters(C);
+
+            foreach (var d in list)
             {
-                List<int> nodes = service.GetIndVertexes(v);
-                if (nodes == null)
+                if (C == d)
                     continue;
+                var w = service.DeltaWeightOfMerge(C, d);
 
-                nodes.RemoveAll(list.Contains);
-
-                foreach (var node in nodes)
-                {
-                    var cTarget = service.GetContainigCluster(node);
-                    if (_pairs.Any(p => (p.C == C && p.D == cTarget) || (p.C == cTarget && p.D == C)))
-                        continue;
-
-                    var w = service.DeltaWeightOfMerge(C, cTarget);
-
-                    if (w > 0)
-                        _pairs.Add(new WeigthedPair() { C = C, D = cTarget, Weigth = w });
-                }
+                if (w > 0)
+                    _pairs.Add(new WeigthedPair() { C = C, D = d, Weigth = w });
             }
 
             /*foreach (var edge in service.Graph.Edges)
